@@ -5,21 +5,23 @@
 
 // let seatInfo = require('../seatinfo/services/seatInfo.service.js')
 
-var linkNode = function(seatInfo){
-    this.next = null;
-    this.previous = null;
-    this.data = null;
-    this.init = function(seatInfo, previous, next){
-        this.data = seatInfo;
-        this.previous = previous;
-        this.next = next;
-    }
-    return (function(seatInfo){
-        this.data = seatInfo;
-        this.previous = null;
-        this.next = null;
-    })();
-}
+var linkNode = function(seatInfo, linkNodeP, linkNodeN){
+
+    this.next = linkNodeN;
+    this.previous = linkNodeP;
+    this.data = seatInfo;
+    // this.init = function(seatInfo, previous, next){
+    //     this.data = seatInfo;
+    //     this.previous = previous;
+    //     this.next = next;
+    // }
+    // return function(seatInfo) {
+    //     this.data = seatInfo;
+    //     this.previous = null;
+    //     this.next = null;
+    // }
+};
+
 
 var playerLink = function(){
     // 链表数目
@@ -39,64 +41,35 @@ var playerLink = function(){
     this.map = new Map();
 
     this.setPlayerOfMe = function(player){
-        playerLink.playerOfMe = player;
+        this.playerOfMe = player;
     }
 
     this.add = function(seatInfo){
         if (seatInfo === null) {
             return;
         }
-        let node = new linkNode(seatInfo);
+        let node = new linkNode(seatInfo, null, null);
         // 只有一个元素
-        if (playerLink.dataList.length === 0) {
-            playerLink.head = node;
-            playerLink.tail = node;
+        if (this.dataList.length === 0) {
+            this.head = node;
+            this.tail = node;
             node.next = node;
             node.previous = node;
-            playerLink.cur = node;
+            this.cur = node;
         } else {
-            playerLink.tail.next = node;
-            node.previous = playerLink.tail;
-            playerLink.tail = node;
-            playerLink.tail.next = playerLink.head;
-            playerLink.head.previous = tail;
+            this.tail.next = node;
+            node.previous = this.tail;
+            this.tail = node;
+            this.tail.next = this.head;
+            this.head.previous = this.tail;
         }
-        playerLink.dataList.push(node);
+        this.dataList.push(node);
 
         // 玩家自己
-        if(node.data.user === playerLink.playerOfMe.user) {
-            playerLink.me = node;
+        if(node.data.user === this.playerOfMe.user) {
+            this.me = node;
         }
-        playerLink.map.set(seatInfo.user, playerLink.dataList.length-1);
-    }
-
-    /**
-     * 获取链表中庄家的索引
-     *
-     * @return
-     */
-    this.GetButton = () => {
-        let index = 0,
-            node = playerLink.head;
-        while (node != playerLink.tail) {
-            if (node.data.isButton()) {
-                return index;
-            }
-            node = node.next;
-            index++;
-        }
-        return -1;
-    }
-
-    this.GetButtonSeat = () => {
-        let node = playerLink.head;
-        while (node != tail) {
-            if (node.data.isButton()) {
-                return node.data;
-            }
-            node = node.next;
-        }
-        return {};
+        this.map.set(seatInfo.user, this.dataList.length-1);
     }
 
     /**
@@ -106,9 +79,9 @@ var playerLink = function(){
      */
     this.GetSmallBlind = () => {
         let index = 0,
-            node = playerLink.head;
-        while (node != playerLink.tail) {
-            if (node.data.isSmallBlind()) {
+            node = this.head;
+        while (node != this.tail) {
+            if (node.data.isSmallBlind) {
                 return index;
             }
             node = node.next;
@@ -123,9 +96,9 @@ var playerLink = function(){
      * @return
      */
     this.GetSmallBlindSeat = () => {
-        let node = playerLink.head;
-        while (node != tail) {
-            if (node.data.isSmallBlind()) {
+        let node = this.head;
+        while (node != this.tail) {
+            if (node.data.isSmallBlind) {
                 return node.data;
             }
             node = node.next;
@@ -140,9 +113,9 @@ var playerLink = function(){
      */
     this.GetBigBlind = () => {
         let index = 0,
-            node = playerLink.head;
-        while (node != playerLink.tail) {
-            if (node.data.isBigBlind()) {
+            node = this.head;
+        while (node != this.tail) {
+            if (node.data.isBigBlind) {
                 return index;
             }
             node = node.next;
@@ -158,8 +131,8 @@ var playerLink = function(){
      */
     this.GetBigBlindSeat = () => {
         let node = playerLink.head;
-        while (node != tail) {
-            if (node.data.isBigBlind()) {
+        while (node != this.tail) {
+            if (node.data.isBigBlind) {
                 return node.data;
             }
             node = node.next;
@@ -174,7 +147,9 @@ var playerLink = function(){
      */
     this.Me = () => {
         // 获取自己的索引
-        return playerLink.dataList.indexOf(playerLink.me);
+        // console.log('in me this.dataList',this.dataList)
+        // console.log('in me this.me',this.me)
+        return this.dataList.indexOf(this.me);
     }
 
     /**
@@ -183,7 +158,7 @@ var playerLink = function(){
      * @return
      */
     this.MySeat = () => {
-        return playerLink.dataList[Me()].data;
+        return this.dataList[this.Me()].data;
     }
 
     /**
@@ -192,12 +167,12 @@ var playerLink = function(){
      * @return
      */
     this.GetCurPrevious = () => {
-        return playerLink.dataList.indexOf(playerLink.cur);
+        return this.dataList.indexOf(this.cur);
     }
 
     this.GetPrevious = (p) => {
-        playerLink.cur = playerLink.cur.previous;
-        return playerLink.dataList.indexOf(playerLink.dataList[p].previous);
+        this.cur = this.cur.previous;
+        return this.dataList.indexOf(this.dataList[p].previous);
     }
 
     /**
@@ -210,11 +185,11 @@ var playerLink = function(){
     //     return dataList.get(GetPrevious()).data;
     // }
     this.GetPreviousSeat = (p) => {
-        return playerLink.dataList[GetPrevious(p)].data;
+        return this.dataList[GetPrevious(p)].data;
     }
 
     this.CurrentSeat = () => {
-        return playerLink.cur.data;
+        return this.cur.data;
     }
 
     /**
@@ -223,12 +198,12 @@ var playerLink = function(){
      * @return
      */
     this.curNextSeat = () => {
-        playerLink.cur = playerLink.cur.next;
-        return playerLink.cur.data;
+        this.cur = this.cur.next;
+        return this.cur.data;
     }
 
     this.NextSeat = (p) => {
-        return playerLink.dataList[p].next.data;
+        return this.dataList[p].next.data;
     }
 
     /**
@@ -237,10 +212,10 @@ var playerLink = function(){
      * @return
      */
     this.GetNextActive = () => {
-        let node = playerLink.cur.next;
-        while (node != playerLink.cur) {
+        let node = this.cur.next;
+        while (node != this.cur) {
             if (!node.data.isFold()) {
-                playerLink.cur = node;
+                this.cur = node;
                 return node.data;
             }
             node = node.next;
@@ -256,10 +231,10 @@ var playerLink = function(){
      * @return
      */
     this.seek = (p) => {
-        if (p < 0 || p > playerLink.dataList.length - 1) {
+        if (p < 0 || p > this.dataList.length - 1) {
             console.log('超出范围')
         }
-        playerLink.cur = playerLink.dataList[p];
+        this.cur = this.dataList[p];
     }
 
     /**
@@ -268,7 +243,7 @@ var playerLink = function(){
      * @return
      */
     this.GetPlayerNum = () => {
-        return playerLink.dataList.length;
+        return this.dataList.length;
     }
 
     /**
@@ -277,14 +252,14 @@ var playerLink = function(){
      * @return
      */
     this.GetActivePlayerNum = () => {
-        let node = playerLink.head, cnt = 0;
-        while (node != playerLink.tail) {
+        let node = this.head, cnt = 0;
+        while (node != this.tail) {
             if (!node.data.isFold()) {
                 cnt++;
             }
             node = node.next;
         }
-        if(!playerLink.tail.data.isFold()) cnt++;
+        if(!this.tail.data.isFold()) cnt++;
         return cnt;
     }
 
@@ -295,20 +270,20 @@ var playerLink = function(){
      * @return
      */
     this.GetPlayer = (p) => {
-        if(p>=0 && p<playerLink.dataList.length)
-            return playerLink.dataList[p].data;
+        if(p>=0 && p<this.dataList.length)
+            return this.dataList[p].data;
         else
             return {};
     }
 
     this.GetPlayerByUser = (user) => {
-        if(playerLink.map.containsKey(user))
-            return GetPlayer(playerLink.map.get(user));
+        if(this.map.containsKey(user))
+            return GetPlayer(this.map.get(user));
         else
             return {};
     }
     this.GetPlayerLink = () => {
-        return playerLink;
+        return this;
     }
 }
 

@@ -7,23 +7,23 @@
 module.exports = {
 
     //游戏最大局数
-    MAX_PLAYNUM : 600,
+    MAX_PLAYNUM : 50,
 
     //小盲注
-    SMALL_BLIND_BET : 20,
+    SMALL_BLIND_BET : 100,
 
     //大盲注
-    BIG_BLIND_BET : 40,
+    BIG_BLIND_BET : 200,
 
     //前一位玩家的金钱
-    TOTAL_MONEY_PER_PLAYER : 4000,
+    TOTAL_MONEY_PER_PLAYER : 100000,
 
 
     //计算各个threshold的时候用到多少条历史记录
-    PREFLOP_THRESHOLD_CALC_NUM : 600,
-    FLOP_THRESHOLD_CALC_NUM : 600,
-    TURN_THRESHOLD_CALC_NUM : 600,
-    RIVER_THRESHOLD_CALC_NUM : 600,
+    PREFLOP_THRESHOLD_CALC_NUM : 50,
+    FLOP_THRESHOLD_CALC_NUM : 50,
+    TURN_THRESHOLD_CALC_NUM : 50,
+    RIVER_THRESHOLD_CALC_NUM : 50,
 
     state : {
         PreFlop: 'PreFlop', //先下大小盲注，然后给每个玩家发2张底牌
