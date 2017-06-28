@@ -214,7 +214,7 @@ var playerLink = function(){
     this.GetNextActive = () => {
         let node = this.cur.next;
         while (node != this.cur) {
-            if (!node.data.isFold()) {
+            if (!node.data.isFold) {
                 this.cur = node;
                 return node.data;
             }
@@ -254,12 +254,12 @@ var playerLink = function(){
     this.GetActivePlayerNum = () => {
         let node = this.head, cnt = 0;
         while (node != this.tail) {
-            if (!node.data.isFold()) {
+            if (!node.data.isFold) {
                 cnt++;
             }
             node = node.next;
         }
-        if(!this.tail.data.isFold()) cnt++;
+        if(!this.tail.data.isFold) cnt++;
         return cnt;
     }
 
@@ -277,7 +277,7 @@ var playerLink = function(){
     }
 
     this.GetPlayerByUser = (user) => {
-        if(this.map.containsKey(user))
+        if(this.map.has(user))
             return this.GetPlayer(this.map.get(user));
         else
             return {};

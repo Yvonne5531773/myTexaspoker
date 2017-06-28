@@ -20,7 +20,6 @@ var seatInfo = function() {
     this.isFold = false;     //表明是否已弃牌
     this.isAllin = false;	//表明是否已allin
 
-    this.positionIndex = 0;
     this.preflopBet = 0;
     this.preflopRaiseBet = 0;
     this.flopBet = 0;

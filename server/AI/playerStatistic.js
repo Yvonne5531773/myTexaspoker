@@ -34,6 +34,100 @@ var playerStatistic = function(){
     this.raiseMax = [];
     this.followMax = [];
 
+    this.getRaiseMax = function(index) {
+        return this.raiseMax[index];
+    }
+    this.setRaiseMax = function(index, val) {
+        this.raiseMax[index] = val;
+    }
+
+    this.GetIsWatchedMap = function(index) {
+        return this.isWatchedMap[index];
+    }
+    this.setIsWatchedMap = function(index, val) {
+        this.isWatchedMap[index] = val;
+    }
+
+    this.getWatchGoodNum = function(index) {
+        return this.watchGoodNum[index];
+    }
+    this.setWatchGoodNum = function(index, val) {
+        this.watchGoodNum[index] = val;
+    }
+    this.addWatchGoodNum = function(index) {
+        this.watchGoodNum[index] += 1;
+    }
+
+    this.getFollowMax = function(index) {
+        return this.followMax[index];
+    }
+    this.setFollowMax = function(index, val) {
+        this.followMax[index] = val;
+    }
+    this.getPreflopRaiseNum = function() {
+        return this.preflopRaiseNum;
+    }
+
+    this.setPreflopRaiseNum = function(preflopRaiseNum) {
+        this.preflopRaiseNum = preflopRaiseNum;
+    }
+    this.addPreflopRaiseNum = function() {
+        this.preflopRaiseNum += 1;
+    }
+    this.getFlopRaiseNum = function() {
+        return this.flopRaiseNum;
+    }
+    this.setFlopRaiseNum = function(flopRaiseNum) {
+        this.flopRaiseNum = flopRaiseNum;
+    }
+    this.addFlopRaiseNum = function() {
+        this.flopRaiseNum += 1;
+    }
+    this.getTurnRaiseNum = function() {
+        return this.turnRaiseNum;
+    }
+    this.setTurnRaiseNum = function(turnRaiseNum) {
+        this.turnRaiseNum = turnRaiseNum;
+    }
+    this.addTurnRaiseNum = function() {
+        this.turnRaiseNum += 1;
+    }
+    this.getRiverRaiseNum = function() {
+        return this.riverRaiseNum;
+    }
+    this.setRiverRaiseNum = function(riverRaiseNum) {
+        this.riverRaiseNum = riverRaiseNum;
+    }
+    this.addRiverRaiseNum = function() {
+        this.riverRaiseNum += 1;
+    }
+    this.isPreflopRaiseNumFlag = function() {
+        return this.preflopRaiseNumFlag;
+    }
+    this.setPreflopRaiseNumFlag = function(preflopRaiseNumFlag) {
+        this.preflopRaiseNumFlag = preflopRaiseNumFlag;
+    }
+    this.isFlopRaiseNumFlag = function() {
+        return this.flopRaiseNumFlag;
+    }
+    this.setFlopRaiseNumFlag = function(flopRaiseNumFlag) {
+        this.flopRaiseNumFlag = flopRaiseNumFlag;
+    }
+    this.isTurnRaiseNumFlag = function() {
+        return this.turnRaiseNumFlag;
+    }
+    this.setTurnRaiseNumFlag = function(turnRaiseNumFlag) {
+        this.turnRaiseNumFlag = turnRaiseNumFlag;
+    }
+
+    this.isRiverRaiseNumFlag = function() {
+        return this.riverRaiseNumFlag;
+    }
+
+    this.setRiverRaiseNumFlag = function(riverRaiseNumFlag) {
+        this.riverRaiseNumFlag = riverRaiseNumFlag;
+    }
+
     this.getPreflopBet = function(index){
         return this.preflopBet[index];
     }
@@ -62,7 +156,33 @@ var playerStatistic = function(){
     this.setRiverBet = function(index, val) {
         this.riverBet[index] = val;
     }
+    this.getPreflopRaiseBet = function(index) {
+        return this.preflopRaiseBet[index];
+    }
+    this.setPreflopRaiseBet = function(index, val) {
+        this.preflopRaiseBet[index] = val;
+    }
 
+    this.getFlopRaiseBet = function(index) {
+        return this.flopRaiseBet[index];
+    }
+    this.setFlopRaiseBet = function(index, val) {
+        this.flopRaiseBet[index] = val;
+    }
+
+    this.getTurnRaiseBet = function(index) {
+        return this.turnRaiseBet[index];
+    }
+    this.setTurnRaiseBet = function(index, val) {
+        this.turnRaiseBet[index] = val;
+    }
+
+    this.getRiverRaiseBet = function(index) {
+        return this.riverRaiseBet[index];
+    }
+    this.setRiverRaiseBet = function(index, val) {
+        this.riverRaiseBet[index] = val;
+    }
     this.getAvgPreflopBet = function(playNum, avgNum){
         if(playNum<1 || avgNum<1){
             return -1;
