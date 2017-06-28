@@ -5,7 +5,7 @@
 var seatInfo = function() {
 
     this.user = '';     // 玩家名字
-    this.position = 0;
+    this.positionIndex = 0;
     this.bet = 0;           // 表明当前的下注额
     this.wager = 0;           // 用户当前牌局已经投入的筹码
     this.user_status = 0;   // 用户当前状态

@@ -278,7 +278,7 @@ var playerLink = function(){
 
     this.GetPlayerByUser = (user) => {
         if(this.map.containsKey(user))
-            return GetPlayer(this.map.get(user));
+            return this.GetPlayer(this.map.get(user));
         else
             return {};
     }

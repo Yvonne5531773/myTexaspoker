@@ -33,6 +33,36 @@ var playerStatistic = function(){
     this.isWatchedMap = new Map();
     this.raiseMax = [];
     this.followMax = [];
+
+    this.getPreflopBet = function(index){
+        return this.preflopBet[index];
+    }
+
+    this.setPreflopBet = function(index, val) {
+        this.preflopBet[index] = val;
+    }
+
+    this.getFlopBet = function(index) {
+        return this.flopBet[index];
+    }
+    this.setFlopBet = function(index, val) {
+        this.flopBet[index] = val;
+    }
+
+    this.getTurnBet = function(index) {
+        return this.turnBet[index];
+    }
+    this.setTurnBet = function(index, val) {
+        this.turnBet[index] = val;
+    }
+
+    this.getRiverBet = function(index) {
+        return this.riverBet[index];
+    }
+    this.setRiverBet = function(index, val) {
+        this.riverBet[index] = val;
+    }
+
     this.getAvgPreflopBet = function(playNum, avgNum){
         if(playNum<1 || avgNum<1){
             return -1;
