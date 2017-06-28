@@ -233,18 +233,21 @@ function requstMessage(token, msgid) {
                                             myself.preflopRaiseCnt++;
                                             type = 5;
                                             money = Math.floor((preflopThreshold.raiseThreshold-myself.detaCallBet)/myself.leastRaiseBet)*myself.leastRaiseBet
+                                            console.log('加注----------')
                                         }
                                         //否则，能让则让
                                         else if(myself.detaCallBet==0){
-                                            type = 7;
+                                            type = 7;console.log('让注----------')
                                         }
                                         //否则，如果阈值允许，则跟
                                         else if(preflopThreshold.followThreshold>myself.detaCallBet || preflopThreshold.followThreshold>=myself.link.MySeat().jetton){
                                             type = 4;
+                                            console.log('跟注----------')
                                         }
                                         //否则，弃牌
                                         else{
                                             type = 8;
+                                            console.log('弃牌----------')
                                         }
                                     }else if(myself.gameStatus==4){ //牌局状态 翻牌
                                         console.log('牌局状态 翻牌-----------------------')
@@ -321,21 +324,6 @@ function requstMessage(token, msgid) {
                                 }
                                 console.log('type', type) ; console.log('money', money)
                                 doAction(token, type, money)
-
-                                //下注后更新链表信息
-                                let curSeat = myself.link.GetPlayerByUser(msg.users_info[0].user)
-                                console.log('-------updatePlayerStatisticTable curSeat----------', curSeat)
-                                if(curSeat){
-                                    curSeat.money = msg.users_info[0].money;
-                                    curSeat.isFold = msg.users_info[0].user_status == 4?true:false;
-                                    curSeat.isAllin = msg.users_info[0].user_status == 5?true:false;
-                                    curSeat.bet = msg.users_info[0].wager;
-                                    curSeat.jetton = msg.users_info[0].money;
-                                    console.log('before updatePlayerStatisticTable curSeat', curSeat)
-                                    updatePlayerStatisticTable(curSeat, myself.gameStatus);
-                                    console.log('after updatePlayerStatisticTable curSeat', curSeat)
-                                }
-
                             }else if(msg.users_info[0].user !== config.player.user){
                                 if(msg.users_info[0].user_status == 6){//已经出局就T出allUserInfor所有的玩家数组中
                                     for(var i=0;i<myself.allUserInfor.length;i++){
@@ -346,11 +334,26 @@ function requstMessage(token, msgid) {
                                 }else{//除了出局的其他状态都更新用户的前牌局已经投入的筹码
                                     for(var i=0;i<myself.allUserInfor.length;i++){
                                         if(myself.allUserInfor[i].user == msg.users_info[0].user){
-                                            myself.allUserInfor[i].wager == msg.users_info[0].wager
+                                            myself.allUserInfor[i].wager = msg.users_info[0].wager
+                                            myself.allUserInfor[i].money -= msg.users_info[0].wager
                                         }
                                     }
                                 }
                             }
+                            //下注后更新链表信息
+                            let curSeat = myself.link.GetPlayerByUser(msg.users_info[0].user)
+                            console.log('-------updatePlayerStatisticTable curSeat----------', curSeat)
+                            if(curSeat){
+                                curSeat.money = msg.users_info[0].money;
+                                curSeat.isFold = msg.users_info[0].user_status == 4?true:false;
+                                curSeat.isAllin = msg.users_info[0].user_status == 5?true:false;
+                                curSeat.bet = msg.users_info[0].wager;
+                                curSeat.jetton = msg.users_info[0].money;
+                                console.log('before updatePlayerStatisticTable curSeat', curSeat)
+                                updatePlayerStatisticTable(curSeat, myself.gameStatus);
+                                console.log('after updatePlayerStatisticTable curSeat', curSeat)
+                            }
+
                             break;
                         case 2:
                             console.log('牌局状态', msg)
@@ -994,8 +997,8 @@ function GetPreFlopThreshold_loose(){
     else{
         console.log('如果在靠前的位置')
         //手牌为对A
-        console.log('手牌为对A')
         if(myWinProba>0.67){
+            console.log('手牌为对A')
             //加注进入
             if(opponentGoodHandsNum==0){
                 raiseThreshold=betUnit;
@@ -1060,16 +1063,17 @@ function GetFlopThreshold_ungar() {
     let precision= 0.01,
     raiseThreshold=0,
     followThreshold=0,
-    myJetton = myMoney,
-    gameLvl=Math.max((myJetton + wager)/100000/2,1),
-    betUnit=100+precision,
+    myJetton = myself.link.MySeat().jetton(),
+    betUnit=myself.leastRaiseBet+precision,
     isSuite=0;
     if(myself.holdCards[0].type===myself.holdCards[1].type)
         isSuite=1;
     let myHandWinProba = constant.handProbaTable[isSuite][getHoldCard1().getPoint().point()][getHoldCard2().getPoint().point()],
-        cardProba = 0.45,
-        myCardType = util.getBiggest(cards),
-        myListenType = util.listenCard(cards);
+        iamListeningCard = false,
+
+        cardProba = GetRiverProba(),
+        myCardType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards))),
+        myListenType = util.listenCard(_.cloneDeep(myself.holdCards.concat(myself.commonCards)));
 
     if(myListenType!==null && myListenType.get("handCard").length>1){
         myself.iamListeningCard=true;
@@ -1219,7 +1223,7 @@ function doSomething(betUnit){
     myself.link.seek(myself.link.Me());
     let curSeat = new seatInfoService();
     curSeat = myself.link.GetNextActive();
-    console.log('in doSomething curSeat', curSeat)
+    // console.log('in doSomething curSeat', curSeat)
     while(curSeat !== null && !curSeat.user===myself.link.MySeat().user){
         //preflop
         oppoPreflopBet=curSeat.preflopBet;
@@ -1388,6 +1392,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){  //加注
             //加注的量
             curSeat.preflopRaiseBet = curSeat.bet;
+            console.log('加注的量 curSeat.preflopRaiseBet', curSeat.preflopRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setPreflopRaiseBet(myself.playNum, curSeat.preflopRaiseBet);
 
@@ -1415,6 +1420,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
             curSeat.flopRaiseBet = curSeat.bet - curSeat.preflopBet;
+            console.log('加注的量 curSeat.flopRaiseBet', curSeat.flopRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setFlopRaiseBet(myself.playNum, curSeat.flopRaiseBet);
 
@@ -1442,6 +1448,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
             curSeat.turnRaiseBet = curSeat.bet-  curSeat.flopBet-curSeat.preflopBet;
+            console.log('加注的量 curSeat.turnRaiseBet', curSeat.turnRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setTurnRaiseBet(myself.playNum, curSeat.turnRaiseBet);
 
@@ -1468,7 +1475,8 @@ function updatePlayerStatisticTable(curSeat, state){
         myself.playerStatisticTable.get(curSeat.user).setRiverBet(myselfplayNum, curSeat.riverBet);
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
-            curSeat.riverRaiseBet(curSeat.bet-curSeat.turnBet-curSeat.flopBet-curSeat.preflopBet);
+            curSeat.riverRaiseBet = curSeat.bet-curSeat.turnBet-curSeat.flopBet-curSeat.preflopBet;
+            console.log('加注的量 curSeat.riverRaiseBet', curSeat.riverRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setRiverRaiseBet(myself.playNum, curSeat.riverRaiseBet);
 
@@ -1531,4 +1539,176 @@ function isJettonEnough(myJetton, jetton_2nd, jetton_3rd, playerNum, smallBlindB
         }
     }
     return false;
+}
+
+/**
+ * 获取河牌阶段自己牌力相对另一个人的输、赢、平的概率
+ */
+function GetRiverProba(){
+    let myHandType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards))),
+        cardUsedMap = [];
+    for(let i=0;i<myself.holdCards.concat(myself.commonCards).length;i++){
+        cardUsedMap[myself.holdCards.concat(myself.commonCards).get(i).point]=true;
+    }
+
+    let opponentCard1 = {},
+        opponentCard2 = {},
+        opponentCards = [];
+    myself.holdCards.concat(myself.commonCards).forEach(function(card){
+        opponentCards.push(card);
+    })
+    let opponentHandType = new Map(),
+        opponentListenType = new Map(),
+    //正常手牌
+        testNum=0,
+        winNum=0,
+        drawNum=0,
+        loseNum=0,
+        listenStraightNum=0,
+        listenFlushNum=0,
+        //一对以上，但又在我牌力之下的
+        onePairNum=0,
+        //非常紧的手牌
+        isSuite,
+        isTight=false,
+        testNum_tight=0,
+        winNum_tight=0,
+        drawNum_tight=0,
+        loseNum_tight=0,
+        listenStraightNum_tight=0,
+        listenFlushNum_tight=0,
+        //一对以上，但又在我牌力之下的
+        onePairNum_tight=0;
+    for(let i=0;i<52;i++){
+        if(cardUsedMap[i] === true)
+            continue;
+        for(let j=i+1;j<52;j++){
+            if(cardUsedMap[j] === true)
+                continue;
+            //如果是小牌，那就跳过。现在假设对手的牌不会出现不是对子而且又是点数小的牌而且不同花色
+            if(i%13 + j%13<8 && i%13 != j%13 && i/4!=j/4)
+                continue;
+            testNum++;
+            opponentCard1.setCardById(i);
+            opponentCard2.setCardById(j);
+            opponentCards.get(0).setCardById(i);
+            opponentCards.get(1).setCardById(j);
+
+            //判断是否紧的手牌
+            isTight=false;
+            if(opponentCard1.getColor()==opponentCard2.getColor()){
+                isSuite=1;
+            }
+            else{
+                isSuite=0;
+            }
+            //综合概率大于0.5
+            if(handProbaTable[isSuite][opponentCard1.getPoint().point()][opponentCard2.getPoint().point()]>0.5){
+                isTight=true;
+            }
+            //中对子
+            else if(i%13 == j%13 && i%13>7){
+                isTight=true;
+            }
+            //同花连张
+            else if((i%13+1==j%13) ||  (i%13==0 && j%13==12) && isSuite==1){
+                isTight=true;
+            }
+            if(isTight){
+                testNum_tight++;
+            }
+
+            opponentHandType=ChenUtil.getBiggest(opponentCards);
+            if(((HoldCardsType)myHandType.get("type")).ordinal()>((HoldCardsType)opponentHandType.get("type")).ordinal()){
+                winNum++;
+                if(isTight){
+                    winNum_tight++;
+                }
+                if(((HoldCardsType)opponentHandType.get("type")).ordinal()>=HoldCardsType.ONE_PAIR.ordinal()){
+                    onePairNum++;
+                    if(isTight){
+                        onePairNum_tight++;
+                    }
+                }
+            }
+        else if(((HoldCardsType)myHandType.get("type")).ordinal()==((HoldCardsType)opponentHandType.get("type")).ordinal()){
+                switch(ChenUtil.compareTwoArrayWithType(ChenUtil.sortCardList((ArrayList)myHandType.get("maxCardList")),ChenUtil.sortCardList((ArrayList)opponentHandType.get("maxCardList")),(HoldCardsType)myHandType.get("type"))){
+                case 0:{
+                        drawNum++;
+                        if(isTight){
+                            drawNum_tight++;
+                        }
+                        break;
+                    }
+                case -1:{
+                        loseNum++;
+                        if(isTight){
+                            loseNum_tight++;
+                        }
+                        break;
+                    }
+                case 1:{
+                        winNum++;
+                        if(isTight){
+                            winNum_tight++;
+                        }
+                        if(((HoldCardsType)opponentHandType.get("type")).ordinal()>=HoldCardsType.ONE_PAIR.ordinal()){
+                            onePairNum++;
+                            if(isTight){
+                                onePairNum_tight++;
+                            }
+                        }
+                        break;
+                    }
+                }
+                }
+        else{
+                loseNum++;
+                if(isTight){
+                    loseNum_tight++;
+                }
+            }
+
+            //听牌概率
+            opponentListenType=ChenUtil.tingPai(opponentCards);
+            if(opponentListenType!=null){
+                if((HoldCardsType)opponentListenType.get("type")==HoldCardsType.STRAIGHT){
+                    if((HoldCardsType)opponentHandType.get("type")!=HoldCardsType.STRAIGHT){
+//							LogHelper.getInstance().log2File(opponentHandType.toString());
+                        listenStraightNum++;
+                        if(isTight){
+                            listenStraightNum_tight++;
+                        }
+                    }
+                }
+                if((HoldCardsType)opponentListenType.get("type")==HoldCardsType.FLUSH){
+                    if((HoldCardsType)opponentHandType.get("type")!=HoldCardsType.FLUSH){
+                        listenFlushNum++;
+                        listenStraightNum++;
+                        if(isTight){
+                            listenStraightNum_tight++;
+                            listenFlushNum_tight++;
+                        }
+                    }
+                }
+            }
+        }
+        //LogHelper.log2Out(i);
+    }
+    CardProbability[] retCardProba=new CardProbability[2];
+
+    if(testNum<=0){
+        retCardProba[0]=new CardProbability(0,1,0);
+        retCardProba[1]=new CardProbability(0,1,0);
+
+    }
+    else{
+        retCardProba[0]=new CardProbability((float)winNum/testNum,(float)loseNum/testNum,(float)drawNum/testNum,(float)listenStraightNum/testNum,(float)listenFlushNum/testNum);
+        retCardProba[1]=new CardProbability((float)winNum_tight/testNum_tight,(float)loseNum_tight/testNum_tight,(float)drawNum_tight/testNum_tight,(float)listenStraightNum_tight/testNum_tight,(float)listenFlushNum_tight/testNum_tight);
+
+    }
+
+    LogHelper.getInstance().log2File("retCardProba[0]:"+retCardProba[0].toString());
+    LogHelper.getInstance().log2File("retCardProba[1]:"+retCardProba[1].toString());
+    return retCardProba;
 }
