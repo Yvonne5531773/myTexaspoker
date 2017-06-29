@@ -11,10 +11,11 @@ for(let i=0;i<52;i++) {
             continue;
         //如果是小牌，那就跳过。现在假设对手的牌不会出现不是对子而且又是点数小的牌而且不同花色
         if (i % 13 + j % 13 < 8 && i % 13 != j % 13 && i / 4 != j / 4) {
-            console.log(i)
-            console.log(j)
+            // console.log(i/13)
+            console.log(i%13+2)
+            // console.log(j+1)
         }
     }
 }
-// console.log(1/13)
-// console.log(1%13)
+// console.log(14/14) //1
+// console.log(14%14) //0
