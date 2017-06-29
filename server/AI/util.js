@@ -9,18 +9,18 @@ let util = {
 
     listenCard: function(cards){
         let cardList = _.cloneDeep(cards);
+        let handCards = cardList.splice(0, 2);
         cardList.sort(util.sortCardList);
-        console.log('listenCard cardList',cardList)
-        let sizeOfCards = cardList.length;
+        let sizeOfCards = cards.length;
         let ret = new Map(),
             temp = [],
             maxType = constant.holdCard.HIGH_CARD,
             maxCardList = [];
         if (sizeOfCards===5){
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 temp = _.cloneDeep(cardList);
                 temp.splice(i, 1);
-                let result = util.calclistenCardIn4(temp);
+                let result = util.calclistenCardIn4(handCards.concat(temp).sort(util.sortCardList));
                 if (!_.isEmpty(result)){
                     let type = result.get("type");
                     if (type >= maxType){
@@ -30,12 +30,12 @@ let util = {
                 }
             }
         }else if (sizeOfCards === 6){
-            for (let i = 0; i <5 ; i++) {
-                for (let j = i; j < 5; j++) {
+            for (let i = 0; i <4 ; i++) {
+                for (let j = i; j < 4; j++) {
                     temp = _.cloneDeep(cardList);
                     temp.splice(i, 1);
                     temp.splice(j, 1);
-                    let result = util.calclistenCardIn4(temp);
+                    let result = util.calclistenCardIn4(handCards.concat(temp).sort(util.sortCardList));
                     if (!_.isEmpty(result)){
                         let type = result.get("type");
                         if (type > maxType){
@@ -66,7 +66,6 @@ let util = {
                     publicCard.push(tempCard);
                 }
             }
-            console.log('in listenCard tempCard', tempCard)
             ret.set("handCard", handCard);
             ret.set("publicCard", publicCard);
             return ret;
@@ -106,35 +105,35 @@ let util = {
     },
 
     getBiggest: (cards) => {
-        console.log('in getBiggest cards',cards)
         let cardList = _.cloneDeep(cards);
+        let handCards = cardList.splice(0, 2);
         cardList.sort(util.sortCardList);
         let temp = [],
-            numOfCard = cardList.length;
+            numOfCard = cards.length;
         if (numOfCard === 5){
-            let maxType = util.getBiggestIn5(cardList),
+            let maxType = util.getBiggestIn5(handCards.concat(cardList).sort(util.sortCardList)),
                 ret = new Map();
             ret.set("type", maxType);
-            ret.set("maxCardList", cardList);
+            ret.set("maxCardList", handCards.concat(cardList));
             return ret;
         }else {
             if (numOfCard === 6) {
                 let maxType = constant.holdCard.HIGH_CARD,
                     maxCardList = [];
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < 4; i++) {
                     temp = _.cloneDeep(cardList);
                     temp.splice(i, 1);
                     if (_.isEmpty(maxCardList)){
-                        maxCardList = _.cloneDeep(temp);
+                        maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList));
                     }
-                    let tempType = util.getBiggestIn5(_.cloneDeep(temp));
+                    let tempType = util.getBiggestIn5(_.cloneDeep(handCards.concat(cardList).sort(util.sortCardList)));
                     if (tempType > maxType) {
                         maxType = tempType;
-                        maxCardList = _.cloneDeep(temp);
+                        maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList));
                     } else if (tempType == maxType) {
-                        let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList), _.cloneDeep(temp), maxType);
+                        let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList), _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList)), maxType);
                         if (result < 0){
-                            maxCardList = _.cloneDeep(temp)
+                            maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList))
                         }
                     }
                 }
@@ -142,26 +141,25 @@ let util = {
                 ret.set("type",maxType);
                 ret.set("maxCardList",maxCardList);
                 return ret;
-
             } else if (numOfCard === 7) {
                 let maxType = constant.holdCard.HIGH_CARD,
                     maxCardList = [];
-                for (let i = 0; i <6 ; i++) {
-                    for (let j = i+1; j <7 ; j++) {
+                for (let i = 0; i <4 ; i++) {
+                    for (let j = i+1; j <5 ; j++) {
                         temp = _.cloneDeep(cardList)
                         temp.splice(i, 1);
                         temp.splice(j-1, 1);
                         if (_.isEmpty(maxCardList)){
-                            maxCardList = _.cloneDeep(temp)
+                            maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList))
                         }
-                        let tempType = util.getBiggestIn5(temp);
+                        let tempType = util.getBiggestIn5(handCards.concat(temp).sort(util.sortCardList));
                         if (tempType > maxType) {
                             maxType = tempType;
-                            maxCardList = _.cloneDeep(temp)
+                            maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList))
                         } else if (tempType === maxType) {
-                            let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList),_.cloneDeep(temp),maxType);
+                            let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList),_.cloneDeep(handCards.concat(temp).sort(util.sortCardList)),maxType);
                             if (result<0){
-                                maxCardList = _.cloneDeep(temp)
+                                maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList))
                             }
                         }
                     }
@@ -169,7 +167,6 @@ let util = {
                 let ret = new Map();
                 ret.set("type", maxType);
                 ret.set("maxCardList", maxCardList);
-                console.log('end maxCardList', maxCardList)
                 return ret;
             } else {
                 return null;
@@ -231,7 +228,7 @@ let util = {
                 break;
             }
         }
-        if (found){
+        if (!found){
             console.log("Error occur compareTwoYidui ");
         }
         let duiziCard2 = {};
@@ -245,16 +242,35 @@ let util = {
                 break;
             }
         }
-        if (found){
+        if (!found){
             console.log("Error occur compareTwoYidui");
         }
         if(duiziCard1.point === duiziCard2.point && duiziCard1.type === duiziCard2.type){
             return util.compareTwoArrayList(cardList1, cardList2);
         } else{
-            return result;
+            return util.compareTo(duiziCard1, duiziCard2);
         }
     },
 
+    compareTo: (obj1, obj2)=>{
+        if(obj1 != null && obj2 != null){
+            let card1 = obj1;
+            let card2 = obj2;
+            if (card1.point>card2.point){
+                return 1;
+            }else if(card1.point<card2.point){
+                return -1;
+            }else{
+                if (card1.type>card2.type){
+                    return 1;
+                }else if(card1.type<card2.type){
+                    return -1;
+                }else{
+                    return 0;
+                }
+            }
+        }
+    },
     compareTwoArrayList: (cardList1, cardList2)=>{
         let size = cardList1.length,
             point1, point2;
@@ -483,11 +499,11 @@ let util = {
     },
 
     sortCardList: function(a, b){
-        var va = parseInt(a.val);
-        var vb = parseInt(b.val);
+        var va = parseInt(a.point);
+        var vb = parseInt(b.point);
         if(va === vb){
-            return a.point > b.point ? 1 : -1;
-        } else if(va > vb){
+            return a.point < b.point ? 1 : -1;
+        } else if(va < vb){
             return -1;
         } else {
             return 1;
@@ -501,8 +517,8 @@ let util = {
             isFlush = false,
             ret = new Map();
         if (sizeOfCards === 4){
-            isStraight = util.isStraight(cardList);
-            isFlush = util.isFlush(cardList);
+            isStraight = util.isListenStraight(cardList);
+            isFlush = util.isListenFlush(cardList);
             if (isStraight && isFlush){
                 ret.set("type", constant.holdCard.STRAIGHT_FLUSH);
                 ret.set("cardList", cardList);
@@ -565,20 +581,56 @@ let util = {
         }
     },
 
-    isStraight: (cards) => {
-        let point1 = cards[0].point,
-            point2 = cards[0].point,
-            point3 = cards[0].point,
-            point4 = cards[0].point;
-
-        if ((point4 - point1) !== 3){
+    isListenStraight: (cardListParam) => {
+        let point1 = cardListParam[0].point,
+         point2 = cardListParam[1].point,
+         point3 = cardListParam[2].point,
+         point4 = cardListParam[3].point;
+        if ((point4-point1)!=3){
             return false;
         }else{
-            if((point1 + 1) === point2 && ((point3 + 1) === point4)){
+            if ((point1+1)==point2&&((point3+1)==point4)){
                 return true;
             }else {
                 return false;
             }
+        }
+    },
+    isListenFlush: (cardListParam) => {
+        let type = cardListParam[0].type,
+            colortemp;
+        for (let i = 1;i<4;i++){
+            colortemp = cardListParam[i].type;
+            if(type != colortemp){
+                return false;
+            }
+        }
+        return true;
+    },
+
+    isStraight: (cards) => {
+        let maxPoint = cards[4].point;
+        let minPoint = cards[0].point;
+        if ((maxPoint - minPoint) !== 4){
+            if (util.isA2345(cards)){
+                return true;
+            }
+            return false;
+        }else{
+            let tempPoint,lastPoint;
+            lastPoint = cards[0].point;
+            for (let i=1;i<5;i++){
+                tempPoint = cards[i].point;
+                if (tempPoint==lastPoint){
+                    if (util.isA2345(cards)){
+                        return true;
+                    }
+                    return false;
+                }else{
+                    lastPoint = tempPoint;
+                }
+            }
+            return true;
         }
     },
 
@@ -586,9 +638,9 @@ let util = {
         if(cards && cards.length > 0){
             let type = cards[0].type,
                 styletemp;
-            for (let i = 1; i < 4; i++){
+            for (let i = 1; i < 5; i++){
                 styletemp = cards[i].type;
-                if(!type == styletemp){
+                if(type !== styletemp){
                     return false;
                 }
             }
@@ -628,14 +680,14 @@ let util = {
         let counter = 1,
             lastpoint = cards[0].point,
             temppoint = 0;
-        for (let i = 1; i <5 ; i++) {
+        for (let i = 1; i < 5 ; i++) {
             temppoint = cards[i].point;
-            if (temppoint !== lastpoint){
+            if (temppoint != lastpoint){
                 counter++;
                 lastpoint = temppoint;
             }
         }
-        if (counter === 4 && !isStraight(cards)){
+        if (counter == 4 && !util.isFlush(cards)){
             return true;
         }
         return false;
@@ -652,7 +704,7 @@ let util = {
                 lastpoint = temppoint;
             }
         }
-        if (counter === 5 && !isFlush(cards)&&!isStraight(cards)){
+        if (counter === 5 && !util.isFlush(cards)&&!util.isStraight(cards)){
             return true;
         }
         return false;

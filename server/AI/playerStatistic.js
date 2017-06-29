@@ -526,7 +526,7 @@ var playerStatistic = function(){
                 return -1;
             }
             else{
-                return actualNum/AvgNum;
+                return actualNum/avgNum;
             }
         }
     }
