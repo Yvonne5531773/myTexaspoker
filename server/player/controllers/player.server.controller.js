@@ -136,7 +136,7 @@ function requstMessage(token, msgid) {
                     var msg = JSON.parse(BASE64.decode(result.msgs[0].msg));
                     switch (result.msgs[0].msg_type){
                         case 1:
-                            console.log('---------------用户状态---------------------', msg)
+                            console.log('---------------用户状态--------------------- msg', msg)
                             if(msg.users_info[0].user_status===5) myself.oneHasAllIn = true;
                             if(msg.users_info[0].user_status===4) myself.avtivePlayers -= 1;
                             myself.imSmallBlind = _.filter(myself.seatinfos, {'isSmallBlind':true}).user === msg.users_info[0].user;
@@ -150,8 +150,9 @@ function requstMessage(token, msgid) {
                             if(msg.users_info[0].user === config.player.user && msg.users_info[0].user_status === 2 && !myself.link.MySeat().isFold && !myself.link.MySeat().isAllin){ //告诉自己要下注
                                 console.log('--------------自己要下注----------------')
                                 myself.round++;
-                                var newMsgid = result.last_msg_id,
-                                    type = 7, money = 0;
+                                myself.curCallBet = 0;
+                                myself.detaCallBet = 0;
+                                let type = 7, money = 0;
                                 if(myself.oneHasAllIn) {
                                     type = 8;
                                     money = 0;
@@ -160,6 +161,7 @@ function requstMessage(token, msgid) {
                                     //计算出本次行动要跟进的话至少要跟注的数额
                                     myself.link.seek(myself.link.Me());	//定位到自己的位置
                                     myself.lastCallBet = myself.link.MySeat().bet;	//获取自己上次的投注额
+                                    console.log('获取自己上次的投注额 myself.lastCallBet', myself.lastCallBet)
                                     while(myself.link.curNextSeat().user !== myself.link.MySeat().user){
                                         console.log('上一位玩家的投注额', myself.link.CurrentSeat().bet)
                                         if(myself.link.CurrentSeat().bet - myself.lastCallBet > myself.detaCallBet){
@@ -355,6 +357,12 @@ function requstMessage(token, msgid) {
                                 for(var i=0;i<myself.allUserInfor.length;i++){//当翻、转、河牌时，就把所有玩家的当轮已经投入的筹码清零
                                     myself.allUserInfor[i].wager = 0;
                                 }
+                                //每一阶段开始清空玩家的bet记录
+                                myself.link.MySeat().bet = 0;
+                                myself.link.seek(myself.link.Me());	//定位到自己的位置
+                                while(myself.link.curNextSeat().user !== myself.link.MySeat().user){
+                                    myself.link.CurrentSeat().bet = 0;
+                                }
                             }else if(msg.game_status == 7 && !myself.link.MySeat().isFold){//执行摊牌操作
                                 console.log('-----------------执行摊牌操作----------------')
                                 console.log('执行摊牌操作 commonCards', myself.commonCards)
@@ -400,9 +408,11 @@ function requstMessage(token, msgid) {
                                     seatInfo.user = user.user;
                                     seatInfo.jetton = user.money - msg.money;
                                     seatInfo.money = user.money - msg.money;
+                                    seatInfo.bet = msg.money;
                                     seatInfo.isSmallBlind = true;
                                     user.isSmallBlind = true;
                                     user.wager = msg.money;
+                                    user.money -= user.wager;
                                     myself.allUserSeatInfo.push(seatInfo)
                                     if(msg.user === config.player.user) {
                                         myself.me.isSmallBlind = true;
@@ -416,9 +426,11 @@ function requstMessage(token, msgid) {
                                     seatInfo.user = user.user;
                                     seatInfo.jetton = user.money - msg.money;
                                     seatInfo.money = user.money - msg.money;
+                                    seatInfo.bet = msg.money;
                                     seatInfo.isBigBlind = true;
                                     user.isBigBlind = true;
                                     user.wager = msg.money;
+                                    user.money -= user.wager;
                                     myself.allUserSeatInfo.push(seatInfo)
                                     if(msg.user === config.player.user) {
                                         myself.me.isBigBlind = true;
@@ -653,9 +665,7 @@ function onSeatInfo(player) {
     myself.link.CurrentSeat().UpdateRiverRaiseThreshold(avgRiverRaiseBet, medianRiverRaiseBet, bigBlindBet);
 
     //入局率
-
     myself.link.CurrentSeat().incomingRate = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getIncomingRate(myself.playNum - 1, myself.playNum - 1);
-
     while (myself.link.curNextSeat().user.toString() !== myself.link.GetSmallBlindSeat().user.toString()) {
         if (!myself.playerStatisticTable.has(myself.link.CurrentSeat().user)) {
             myself.playerStatisticTable.set(myself.link.CurrentSeat().user, new playerStatisticService());
@@ -2516,11 +2526,11 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){  //加注
             //加注的量
             curSeat.preflopRaiseBet = curSeat.bet;
-            console.log('加注的量 curSeat.preflopRaiseBet', curSeat.preflopRaiseBet)
+            console.log('发底牌阶段 加注的量 curSeat.preflopRaiseBet', curSeat.preflopRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setPreflopRaiseBet(myself.playNum, curSeat.preflopRaiseBet);
 
-            if(myself.playerStatisticTable.get(curSeat.user).preflopRaiseNumFlag==false){
+            if(!myself.playerStatisticTable.get(curSeat.user).preflopRaiseNumFlag){
                 myself.playerStatisticTable.get(curSeat.user).preflopRaiseNum++;
             }
             if(curSeat.user > myself.playerStatisticTable.get(curSeat.user).getRaiseMax(constant.state.PreFlop)){
@@ -2529,11 +2539,13 @@ function updatePlayerStatisticTable(curSeat, state){
         }
         else if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 4){
             if(curSeat.bet > myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop)){
+                console.log('curSeat.bet > myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop)')
                 myself.playerStatisticTable.get(curSeat.user).setFollowMax(constant.state.PreFlop, curSeat.bet);
             }
         }
     } else if(state == 4){
         if(curSeat.isFold==false){
+            console.log('in updatePlayerStatisticTable 翻牌', curSeat.flopBet)
             curSeat.flopBet = curSeat.bet-curSeat.preflopBet;
             if(curSeat.flopRaiseBet==-1){
                 curSeat.flopRaiseBet = 0;
@@ -2544,7 +2556,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
             curSeat.flopRaiseBet = curSeat.bet - curSeat.preflopBet;
-            console.log('加注的量 curSeat.flopRaiseBet', curSeat.flopRaiseBet)
+            console.log('翻牌 加注的量 curSeat.flopRaiseBet', curSeat.flopRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setFlopRaiseBet(myself.playNum, curSeat.flopRaiseBet);
 
@@ -2561,7 +2573,8 @@ function updatePlayerStatisticTable(curSeat, state){
             }
         }
     } else if(state==5){
-        if(curSeat.isFold==false){
+        if(!curSeat.isFold){
+            console.log('in updatePlayerStatisticTable 转牌', curSeat.turnBet)
             curSeat.turnBet = curSeat.bet-curSeat.flopBet-curSeat.preflopBet;
             if(curSeat.turnRaiseBet==-1){
                 curSeat.turnRaiseBet = 0;
@@ -2572,7 +2585,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
             curSeat.turnRaiseBet = curSeat.bet-  curSeat.flopBet-curSeat.preflopBet;
-            console.log('加注的量 curSeat.turnRaiseBet', curSeat.turnRaiseBet)
+            console.log('转牌 加注的量 curSeat.turnRaiseBet', curSeat.turnRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setTurnRaiseBet(myself.playNum, curSeat.turnRaiseBet);
 
@@ -2600,7 +2613,7 @@ function updatePlayerStatisticTable(curSeat, state){
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
             curSeat.riverRaiseBet = curSeat.bet-curSeat.turnBet-curSeat.flopBet-curSeat.preflopBet;
-            console.log('加注的量 curSeat.riverRaiseBet', curSeat.riverRaiseBet)
+            console.log('河牌加注的量 curSeat.riverRaiseBet', curSeat.riverRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setRiverRaiseBet(myself.playNum, curSeat.riverRaiseBet);
 
