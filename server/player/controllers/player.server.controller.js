@@ -360,7 +360,7 @@ function requstMessage(token, msgid) {
                                                 myself.riverCheckCount++;
                                             }
                                             //否则，如果阈值允许，则跟
-                                            else if (riverThreshold.followThreshold > myself.detaCallBet || riverThreshold.followThreshold > myself.link.MySeat().jetton) {
+                                            else if (myself.riverCheckCount > 0 || riverThreshold.followThreshold > myself.detaCallBet || riverThreshold.followThreshold > myself.link.MySeat().jetton) {
                                                 type = 4;
                                                 money = myself.detaCallBet;
                                                 console.log('河牌跟注----------')
