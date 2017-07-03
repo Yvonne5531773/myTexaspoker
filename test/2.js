@@ -10,27 +10,35 @@ var util = require('../server/AI/util')
 // console.log(a)
 
 // console.log(util.listenCard(
+//     [ { type: 2, point: 8 },
+//         { type: 1, point: 2 },
+//         { type: 4, point: 8 },
+//         { type: 1, point: 8 },
+//         { type: 3, point: 8 } ]))
+
+// console.log(util.calclistenCardIn4(
 //     [ { type: 4, point: 5 },
-//         { type: 4, point: 7 },
-//         { type: 2, point: 4 },
 //         { type: 1, point: 5 },
+//         { type: 4, point: 7 },
 //         { type: 1, point: 10 } ]))
 
-console.log(util.calclistenCardIn4(
-    [ { type: 4, point: 5 },
-        { type: 1, point: 5 },
+console.log(util.getBiggest(
+    [
         { type: 4, point: 7 },
-        { type: 1, point: 10 } ]))
+        { type: 1, point: 8 },
+        { type: 3, point: 9 },
+        { type: 4, point: 10 },
+        { type: 4, point: 8 },
+        { type: 2, point: 10 }
+  ]))
 
-// console.log(util.getBiggest(
-//     [
-//     { type: 4, point: 3 },
-//     { type: 1, point: 2 },
-//     { type: 3, point: 8 },
-//     { type: 2, point: 8 },
-//     { type: 4, point: 1 },
-//         { type: 3, point: 1 },
-//   ]))
+// console.log(util.isTwoPairs([
+//     { type: 4, point: 7 },
+//     { type: 1, point: 8 },
+//     { type: 4, point: 10 },
+//     { type: 4, point: 8 },
+//     { type: 2, point: 10 }
+// ].sort(util.sortCardList)))
 
 // console.log(util.getBiggestIn5([
 //     { type: 4, point: 3 },

@@ -7,12 +7,13 @@ var constant = require('../server/constant/constant')
 var _ = require('lodash')
 
 let myself = {};
-    myself.holdCards = [{ type: 3, point: 14 },
-    { type: 4, point: 3 }];
-    myself.commonCards = [{ type: 2, point: 2 },
-        { type: 3, point: 5 },
-        { type: 2, point: 11 }];
-let myHandType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards))),
+    myself.holdCards = [{ type: 4, point: 7 },
+        { type: 1, point: 8 }];
+    myself.commonCards = [{ type: 3, point: 9 },
+        { type: 4, point: 10 },
+        { type: 4, point: 8 },
+        { type: 2, point: 10 }];
+let myHandType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards).sort(util.sortCardList))),
     cardUsedMap = [];
 for(let i=0;i<myself.holdCards.concat(myself.commonCards).length;i++){
     var tmp = myself.holdCards.concat(myself.commonCards)

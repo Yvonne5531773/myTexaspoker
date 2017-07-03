@@ -124,16 +124,16 @@ let util = {
                     temp = _.cloneDeep(cardList);
                     temp.splice(i, 1);
                     if (_.isEmpty(maxCardList)){
-                        maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList));
+                        maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList));
                     }
-                    let tempType = util.getBiggestIn5(_.cloneDeep(handCards.concat(cardList).sort(util.sortCardList)));
+                    let tempType = util.getBiggestIn5(_.cloneDeep(handCards.concat(temp).sort(util.sortCardList)));
                     if (tempType > maxType) {
                         maxType = tempType;
-                        maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList));
+                        maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList));
                     } else if (tempType == maxType) {
-                        let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList), _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList)), maxType);
+                        let result = util.compareTwoArrayWithType(_.cloneDeep(maxCardList), _.cloneDeep(handCards.concat(temp).sort(util.sortCardList)), maxType);
                         if (result < 0){
-                            maxCardList = _.cloneDeep(handCards.concat(cardList).sort(util.sortCardList))
+                            maxCardList = _.cloneDeep(handCards.concat(temp).sort(util.sortCardList))
                         }
                     }
                 }

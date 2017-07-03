@@ -20,18 +20,17 @@ exports.requstMessage = requstMessage;
 exports.showdown = showdown; //摊牌
 
 var player = function() {
-    this.user = config.player.user, this.msg_id = 1, this.playNum = 0,//游戏局数
-        this.seatinfos = [],
-        this.holdCards = [], this.commonCards = [], this.currentTotalCardCount = 0,
-        this.blind = 0,
+    this.user = config.player.user, this.msg_id = 1, this.set_id = 0, this.setIdFlag = 0, this.playNum = 0,//游戏局数
+        this.seatinfos = [], this.betStageNotEmpty = false,
+        this.holdCards = [], this.commonCards = [], this.allCards = [], this.currentTotalCardCount = 0,
+        this.blind = 0, this.prefoldCheckCount = 0, this.foldCheckCount = 0, this.turnCheckCount = 0, this.riverCheckCount = 0,
         this.allUserInfor = [],//记录所有玩家信息
-        this.totalUser = 0,
         this.gameStatus = 0,
         this.statusFlag = 1,
         this.imSmallBlind = false, this.imBigBlind = false, this.checkInFlop = false, this.checkInTurn = false,
         this.checkInRiver = false, this.checkPreFlop = false, this.cardType=null, this.listenOuts=null, this.oneHasAllIn = false,
         this.listenType=null, this.iamListeningCard = false, this.winrate = 0, this.wager = 0, this.myMoney = 0, this.allUserSeatInfo = [],
-        this.me = {}, this.bigBlindBet = 200, this.preflopThreshold = {}, this.avtivePlayers = 0, this.myListenWinProba = 0,
+        this.me = {}, this.bigBlindBet = 200, this.preflopThreshold = {}, this.myListenWinProba = 0,
         this.smallBlindSeat = {}, this.bigBlindSeat = {}, this.otherSeats = {}, this.round = 0,
         this.jetton = 0,//现有的筹码
         this.money= 0, //现有的金币
@@ -45,21 +44,14 @@ var player = function() {
         this.money_3rd=0,
             this.state = constant.state.PreFlop,
             this.state_ff1 = constant.state.PreFlop,
-    this.leastRaiseBet=200, this.opponentGoodHandsNum=0, this.opponentGoodFlopLvl1Num=0, this.opponentGoodFlopLvl2Num=0, this.opponentGoodTurnLvl1Num=0, this.opponentGoodTurnLvl2Num=0, this.opponentGoodRiverLvl1Num=0, this.opponentGoodRiverLvl2Num=0,
-            this.flopInqNum=0, this.curCallBet=100, this.lastCallBet=0, this.detaCallBet=100,
-            this.preflopRaiseCnt=0, this.maxRaiseNum = 1, this.flopRaiseCnt=0, this.turnRaiseCnt=0, this.riverRaiseCnt=0, this.totalPot=0, this.playerMinJetton=32000, this.playerMaxJetton=0, this.totalMoney=100000, this.totalMoneyPerPlayer=100000, this.initJetton=2000, this.smallBlindBet=100, this.bigBlindBet=200,
+    this.leastRaiseBet=200, this.opponentGoodHandsNum=0, this.opponentGoodFlopLvl1Num=0, this.opponentGoodFlopLvl2Num=0, this.opponentGoodTurnLvl1Num=0, this.opponentGoodTurnLvl2Num=0, this.opponentGoodRiverLvl1Num=0, this.opponentGoodRiverLvl2Num=0, this.curCallBet=100, this.lastCallBet=0, this.detaCallBet=100,
+            this.preflopRaiseCnt=0, this.maxRaiseNum = 1, this.flopRaiseCnt=0, this.turnRaiseCnt=0, this.riverRaiseCnt=0, this.playerMinJetton=32000, this.playerMaxJetton=0, this.totalMoney=400000, this.totalMoneyPerPlayer=100000, this.initJetton=2000, this.smallBlindBet=100, this.bigBlindBet=200,
             this.money_1st=0, this.money_2nd=0, this.money_3rd=0, this.preflopLoseProba=0, this.flopLoseProba=0, this.turnLoseProba=0, this.riverLoseProba=0;
 }
 
 var myself = new player();
 
-let precision=0.01, handLvl, handLvlThreshold=4, frontNum=0, backNum=0, preflopFrontNum=0,
-    preflopBackNum=0, backCrazyOpponentNum=0, crazyOpponentNum=0, backGoodHandsNum=0, opponentGoodHandsNum=0,
-    opponentGoodFlopLvl1Num=0, opponentGoodTurnLvl1Num=0, opponentGoodRiverLvl1Num=0, oppoPreflopBet=0, flopInqNum = 0,
-    maxOppoPreflopBet=0, minOppoPreflopBet=1000, maxPreflopLvl1Threshold=0,
-    minPreflopLvl1Threshold=1000, maxPreflopRaiseLvl1Threshold=0, minPreflopRaiseLvl1Threshold=1000, oppoFlopBet=0,
-    maxOppoFlopBet=0, minOppoFlopBet=1000, maxFlopLvl1Threshold=0, minFlopLvl1Threshold=1000, maxFlopLvl2Threshold=0, minFlopLvl2Threshold=2000,
-    maxFlopRaiseLvl1Threshold=0, minFlopRaiseLvl1Threshold=1000, maxFlopRaiseLvl2Threshold=0, minFlopRaiseLvl2Threshold=2000, oppoTurnBet=0, maxOppoTurnBet=0, minOppoTurnBet=1000, maxTurnLvl1Threshold=0, minTurnLvl1Threshold=1000, maxTurnLvl2Threshold=0, minTurnLvl2Threshold=2000, maxTurnRaiseLvl1Threshold=0, minTurnRaiseLvl1Threshold=1000, maxTurnRaiseLvl2Threshold=0, minTurnRaiseLvl2Threshold=2000, oppoRiverBet=0, maxOppoRiverBet=0, minOppoRiverBet=1000, maxRiverLvl1Threshold=0, minRiverLvl1Threshold=1000, maxRiverRaiseLvl1Threshold=0, minRiverRaiseLvl1Threshold=1000,bigBlindBet = 200;
+let opponentGoodHandsNum=0, opponentGoodFlopLvl1Num=0, opponentGoodTurnLvl1Num=0, opponentGoodRiverLvl1Num=0, precision = 0.01;
 
 function connect() {
     let criteria = {
@@ -75,7 +67,11 @@ function connect() {
                 myself.msg_id = result.msg_id
                 setInterval(function(){
                     // requstUserInfo(2);
-                    requstMessage(result.token, myself.msg_id)
+                    // console.log('in setInterval myself.set_id', myself.set_id)
+                    // console.log('in setInterval myself.setIdFlag', myself.setIdFlag)
+                    // if(myself.setIdFlag > myself.set_id) {
+                        requstMessage(result.token, myself.msg_id)
+                    // }
                 }, 200)
             }
         }
@@ -91,12 +87,17 @@ function requstUserInfo(type) {
     playerService.requstUserInfo(criteria, function(err, result){
         if(err) return {};
         else{
+            console.log('-----------in requstUserInfo-----------')
             if(!_.isEmpty(result.users_info)){
+                // myself.set_id = result.set_id;
                 myself.msg_id = result.msgid;
                 myself.msg_id++;
                 myself.allUserInfor = result.users_info;
-                myself.totalUser = myself.allUserInfor.length;
-                myself.avtivePlayers = myself.totalUser;
+                myself.allUserInfor.forEach(function(user){
+                    user.user_status = 1;
+                    user.wager = 0;
+                })
+                console.log('in requstUserInfo myself.allUserInfor', myself.allUserInfor)
             }
         }
     })
@@ -132,13 +133,12 @@ function requstMessage(token, msgid) {
             if(result.ret === 0){
                 if(!_.isEmpty(result.msgs)){
                     myself.msg_id = result.msgs[0].msg_id + 1;
-                    console.log('msg_id',myself.msg_id)
                     var msg = JSON.parse(BASE64.decode(result.msgs[0].msg));
+                    if(msg.set_id === myself.setIdFlag) return;
                     switch (result.msgs[0].msg_type){
                         case 1:
                             console.log('---------------用户状态--------------------- msg', msg)
                             if(msg.users_info[0].user_status===5) myself.oneHasAllIn = true;
-                            if(msg.users_info[0].user_status===4) myself.avtivePlayers -= 1;
                             myself.imSmallBlind = _.filter(myself.seatinfos, {'isSmallBlind':true}).user === msg.users_info[0].user;
                             myself.imBigBlind = _.filter(myself.seatinfos, {'isBigBlind':true}).user === msg.users_info[0].user;
                             if(msg.users_info[0].user === config.player.user){
@@ -146,187 +146,222 @@ function requstMessage(token, msgid) {
                                 myself.myMoney = msg.users_info[0].money;
                                 myself.me = msg.users_info[0];
                             }
-
-                            if(msg.users_info[0].user === config.player.user && msg.users_info[0].user_status === 2 && !myself.link.MySeat().isFold && !myself.link.MySeat().isAllin){ //告诉自己要下注
-                                console.log('--------------自己要下注----------------')
-                                myself.round++;
-                                myself.curCallBet = 0;
-                                myself.detaCallBet = 0;
-                                let type = 7, money = 0;
-                                if(myself.oneHasAllIn) {
-                                    type = 8;
-                                    money = 0;
-                                    myself.oneHasAllIn = false;
-                                }else{
-                                    //计算出本次行动要跟进的话至少要跟注的数额
-                                    myself.link.seek(myself.link.Me());	//定位到自己的位置
-                                    myself.lastCallBet = myself.link.MySeat().bet;	//获取自己上次的投注额
-                                    console.log('获取自己上次的投注额 myself.lastCallBet', myself.lastCallBet)
-                                    while(myself.link.curNextSeat().user !== myself.link.MySeat().user){
-                                        console.log('上一位玩家的投注额', myself.link.CurrentSeat().bet)
-                                        if(myself.link.CurrentSeat().bet - myself.lastCallBet > myself.detaCallBet){
-                                            myself.detaCallBet = myself.link.CurrentSeat().bet - myself.lastCallBet;
+                            if(!_.isEmpty(myself.link.dataList)){
+                                console.log('myself.link.MySeat().isFold', myself.link.MySeat().isFold)
+                                console.log('myself.link.MySeat().isAllin', myself.link.MySeat().isAllin)
+                                if(msg.users_info[0].user === config.player.user && msg.users_info[0].user_status === 2 && !myself.link.MySeat().isFold && !myself.link.MySeat().isAllin) { //告诉自己要下注
+                                    console.log('--------------自己要下注----------------')
+                                    myself.round++;
+                                    myself.curCallBet = 0;
+                                    myself.detaCallBet = 0;
+                                    let type = 7, money = 0;
+                                    // if (myself.oneHasAllIn) {
+                                    //     type = 8;
+                                    //     money = 0;
+                                    //     myself.oneHasAllIn = false;
+                                    // } else {
+                                        //计算出本次行动要跟进的话至少要跟注的数额
+                                        myself.link.seek(myself.link.Me());	//定位到自己的位置
+                                        myself.lastCallBet = myself.link.MySeat().bet;	//获取自己上次的投注额
+                                        console.log('获取自己上次的投注额 myself.lastCallBet', myself.lastCallBet)
+                                        myself.betStageNotEmpty = false;
+                                        while (myself.link.curNextSeat().user !== myself.link.MySeat().user) {
+                                            console.log('上一位玩家的投注额', myself.link.CurrentSeat().bet)
+                                            if (myself.link.CurrentSeat().bet - myself.lastCallBet > myself.detaCallBet) {
+                                                myself.detaCallBet = myself.link.CurrentSeat().bet - myself.lastCallBet;
+                                            }
+                                            if (myself.link.CurrentSeat().bet !== 0) {  //每一阶段的开始，翻拍 转牌..
+                                                myself.betStageNotEmpty = true;
+                                            }
                                         }
-                                    }
-                                    console.log('计算出本次行动要跟进的话至少要跟注的数额', myself.detaCallBet)
-                                    console.log('myself.gameStatus', myself.gameStatus)
+                                        console.log('计算出本次行动要跟进的话要下注还是跟注 myself.betStageNotEmpty', myself.betStageNotEmpty)
+                                        console.log('计算出本次行动要跟进的话至少要跟注的数额', myself.detaCallBet)
+                                        console.log('myself.gameStatus', myself.gameStatus)
 
-                                    //本次动作如果跟进至少要达到curCallBet的投注额
-                                    myself.curCallBet = myself.lastCallBet + myself.detaCallBet;
-                                    console.log('本次动作如果跟进至少要达到curCallBet的投注额', myself.curCallBet)
-                                    //如果所有对手都已经弃牌了，
-                                    if(myself.link.GetActivePlayerNum() < 2){
-                                        type = 4;
-                                        money = myself.detaCallBet;
-                                    }
-                                    //如果自己的筹码远远超出对手，则进入弃牌模式
-                                    else if(isJettonDominated(myself.link.MySeat().bet+myself.link.MySeat().jetton+myself.link.MySeat().money,myself.totalMoney,myself.link.GetPlayerNum(),myself.smallBlindBet,myself.bigBlindBet,myself.playNum,constant.MAX_PLAYNUM)){
-                                        console.log('如果自己的筹码远远超出对手，则进入弃牌模式')
-                                        //能让则让
-                                        if(myself.detaCallBet == 0){
+                                        //本次动作如果跟进至少要达到curCallBet的投注额
+                                        myself.curCallBet = myself.lastCallBet + myself.detaCallBet;
+                                        console.log('本次动作如果跟进至少要达到curCallBet的投注额', myself.curCallBet)
+                                        //如果所有对手都已经弃牌了，
+                                        if (myself.link.GetActivePlayerNum() < 2) {
+                                            type = 4;
+                                            money = myself.detaCallBet;
+                                        }
+                                        //如果自己的筹码远远超出对手，则进入弃牌模式
+                                        // else if(isJettonDominated(myself.link.MySeat().bet + myself.link.MySeat().jetton, myself.totalMoney, myself.link.GetPlayerNum(), myself.smallBlindBet, myself.bigBlindBet, myself.playNum, constant.MAX_PLAYNUM)) {
+                                        //     console.log('如果自己的筹码远远超出对手，则进入弃牌模式')
+                                        //     //能让则让
+                                        //     if (myself.detaCallBet === 0 && myself.prefoldCheckCount === 0 && !myself.betStageNotEmpty) {
+                                        //         type = 7;
+                                        //         myself.prefoldCheckCount++;
+                                        //     }
+                                        //     //否则，弃牌
+                                        //     else {
+                                        //         type = 8;
+                                        //     }
+                                        // }
+                                        //如果还有没弃牌的对手，则做决策
+                                        else if (myself.gameStatus == 2 && myself.link.MySeat().isFold == false && myself.link.MySeat().isAllin == false) { //牌局状态 发底牌，如果不是大小盲注，就执行该下注
+                                            console.log('牌局状态 非大小盲注的第一次下注-------------------')
+                                            console.log('牌局状态 非大小盲注的第一次下注--------------------------- myself.link.MySeat().jetton', myself.link.MySeat().jetton)
+                                            //根据自己手牌估算输掉的概率
+                                            let preflopThreshold;
+                                            if (myself.link.GetPlayerNum() >= 8 || isJettonEnough(myself.link.MySeat().bet + myself.link.MySeat().jetton + myself.link.MySeat().money, myself.money_2nd, myself.money_3rd, myself.link.GetPlayerNum(), myself.smallBlindBet, myself.bigBlindBet, myself.playNum, constant.MAX_PLAYNUM)) {
+                                                console.log('根据自己手牌估算输掉的概率1')
+                                                preflopThreshold = GetPreFlopThreshold_loose();
+                                            }
+                                            else {
+                                                console.log('根据自己手牌估算输掉的概率2')
+                                                preflopThreshold = GetPreFlopThreshold_loose();
+                                            }
+                                            console.log('---------preflopThreshold-------------', preflopThreshold)
+                                            console.log('牌局状态 第一次 myself.detaCallBet', myself.detaCallBet)
+                                            console.log('牌局状态 第一次 myself.leastRaiseBet', myself.leastRaiseBet)
+                                            console.log('牌局状态 第一次 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 第一次 myself.maxRaiseNum', myself.maxRaiseNum)
+                                            //如果阈值允许，则加注相应的数量
+                                            if (preflopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.preflopRaiseCnt < myself.maxRaiseNum) {
+                                                myself.preflopRaiseCnt++;
+                                                type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
+                                                money = Math.floor((preflopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet
+                                                console.log('加注---------- type', type)
+                                            }
+                                            //否则，能让则让
+                                            else if (myself.detaCallBet === 0 && myself.prefoldCheckCount === 0 && !myself.betStageNotEmpty) {
+                                                type = 7;
+                                                console.log('让注----------')
+                                                myself.prefoldCheckCount++;
+                                            }
+                                            //否则，如果阈值允许，则跟
+                                            else if (preflopThreshold.followThreshold > myself.detaCallBet || preflopThreshold.followThreshold >= myself.link.MySeat().jetton) {
+                                                type = 4;
+                                                money = myself.detaCallBet;
+                                                console.log('跟注----------')
+                                            }
+                                            //否则，弃牌
+                                            else {
+                                                type = 8;
+                                                console.log('弃牌----------')
+                                            }
+                                        } else if (myself.gameStatus == 4 && myself.link.MySeat().isFold == false && myself.link.MySeat().isAllin == false) { //牌局状态 翻牌
+                                            console.log('牌局状态 翻牌-----------------------')
+                                            console.log('牌局状态 翻牌--------------------------- myself.link.MySeat().jetton', myself.link.MySeat().jetton)
+                                            let flopThreshold = GetFlopThreshold_ungar();
+                                            console.log('牌局状态 翻牌 flopThreshold', flopThreshold)
+                                            console.log('牌局状态 翻牌 myself.detaCallBet', myself.detaCallBet)
+                                            console.log('牌局状态 翻牌 myself.leastRaiseBet', myself.leastRaiseBet)
+                                            console.log('牌局状态 翻牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 翻牌 myself.maxRaiseNum', myself.maxRaiseNum)
+                                            //如果阈值允许，则加注相应的数量
+                                            if (flopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && flopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
+                                                myself.flopRaiseCnt++;
+                                                type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
+                                                money = Math.floor((flopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                console.log('翻牌加注---------- money', money)
+                                            }
+                                            //否则，能让则让
+                                            else if (myself.detaCallBet === 0 && myself.foldCheckCount === 0 && !myself.betStageNotEmpty) {
+                                                type = 7;
+                                                console.log('翻牌让注----------foldCheckCount', myself.foldCheckCount)
+                                                myself.foldCheckCount++;
+                                            }
+                                            //否则，如果阈值允许，则跟
+                                            else if (flopThreshold.followThreshold > myself.detaCallBet || flopThreshold.followThreshold > myself.link.MySeat().jetton) {
+                                                type = 4;
+                                                money = myself.detaCallBet;
+                                                console.log('翻牌跟注----------')
+                                            }
+                                            //否则，弃牌
+                                            else {
+                                                type = 8;
+                                                console.log('翻牌弃牌----------')
+                                            }
+                                        } else if (myself.gameStatus == 5 && myself.link.MySeat().isFold == false && myself.link.MySeat().isAllin == false) {//牌局状态 转牌（发第四张公共牌）
+                                            console.log('牌局状态 转牌---------------------------')
+                                            console.log('牌局状态 转牌--------------------------- myself.link.MySeat().jetton', myself.link.MySeat().jetton)
+                                            let turnThreshold = GetTurnThreshold_ungar();
+                                            console.log('牌局状态 转牌 turnThreshold', turnThreshold)
+                                            console.log('牌局状态 转牌 myself.detaCallBet', myself.detaCallBet)
+                                            console.log('牌局状态 转牌 myself.leastRaiseBet', myself.leastRaiseBet)
+                                            console.log('牌局状态 转牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 转牌 myself.maxRaiseNum', myself.maxRaiseNum)
+                                            //如果阈值允许，则加注相应的数量
+                                            if (turnThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && turnThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
+                                                myself.turnRaiseCnt++;
+                                                type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
+                                                money = Math.floor((turnThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                console.log('转牌加注----------')
+                                            }
+                                            //否则，能让则让
+                                            else if (myself.detaCallBet === 0 && myself.turnCheckCount === 0 && !myself.betStageNotEmpty) {
+                                                type = 7;
+                                                console.log('转牌让注----------')
+                                                myself.turnCheckCount++;
+                                            }
+                                            //否则，如果阈值允许，则跟
+                                            else if (turnThreshold.followThreshold > myself.detaCallBet || turnThreshold.followThreshold > myself.link.MySeat().jetton) {
+                                                type = 4;
+                                                money = myself.detaCallBet;
+                                                console.log('转牌跟注----------')
+                                            }
+                                            //否则，弃牌
+                                            else {
+                                                type = 8;
+                                                console.log('转牌弃牌----------')
+                                            }
+                                        } else if (myself.gameStatus == 6 && myself.link.MySeat().isFold == false && myself.link.MySeat().isAllin == false) {//牌局状态 河牌（发第五张公共牌）
+                                            console.log('牌局状态 河牌---------------------------------')
+                                            console.log('牌局状态 河牌--------------------------- myself.link.MySeat().jetton', myself.link.MySeat().jetton)
+                                            let riverThreshold = GetRiverThreshold_ungar();
+                                            console.log('牌局状态 河牌 riverThreshold', riverThreshold)
+                                            console.log('牌局状态 河牌 myself.detaCallBet', myself.detaCallBet)
+                                            console.log('牌局状态 河牌 myself.leastRaiseBet', myself.leastRaiseBet)
+                                            console.log('牌局状态 河牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 河牌 myself.maxRaiseNum', myself.maxRaiseNum)
+                                            //如果阈值允许，则加注相应的数量
+                                            if (riverThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && riverThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum) {
+                                                myself.riverRaiseCnt++;
+                                                type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
+                                                money = Math.floor((riverThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                console.log('河牌加注----------')
+                                            }
+                                            //否则，能让则让
+                                            else if (myself.detaCallBet === 0 && myself.riverCheckCount === 0 && !myself.betStageNotEmpty) {
+                                                type = 7;
+                                                console.log('河牌让注----------')
+                                                myself.riverCheckCount++;
+                                            }
+                                            //否则，如果阈值允许，则跟
+                                            else if (riverThreshold.followThreshold > myself.detaCallBet || riverThreshold.followThreshold > myself.link.MySeat().jetton) {
+                                                type = 4;
+                                                money = myself.detaCallBet;
+                                                console.log('河牌跟注----------')
+                                            }
+                                            //否则，弃牌
+                                            else {
+                                                type = 8;
+                                                console.log('河牌弃牌----------')
+                                            }
+                                        } else if (myself.link.MySeat().isFold == false && myself.link.MySeat().isAllin == false) {//牌局状态 摊牌
                                             type = 7;
+                                            console.log('其它状况---让注----------')
                                         }
-                                        //否则，弃牌
-                                        else{
-                                            type = 8;
-                                        }
-                                    }
-                                    //如果还有没弃牌的对手，则做决策
-                                    else if(myself.gameStatus == 2 && myself.link.MySeat().isFold==false && myself.link.MySeat().isAllin==false){ //牌局状态 发底牌，如果不是大小盲注，就执行该下注
-                                        console.log('牌局状态 非大小盲注的第一次下注-------------------')
-                                        console.log('牌局状态 非大小盲注的第一次下注--------------------------- myself.link.MySeat().jetton',myself.link.MySeat().jetton)
-                                        //根据自己手牌估算输掉的概率
-                                        let preflopThreshold;
-                                        if(myself.link.GetPlayerNum()>=8 || isJettonEnough(myself.link.MySeat().bet+myself.link.MySeat().jetton+myself.link.MySeat().money,myself.money_2nd,myself.money_3rd,myself.link.GetPlayerNum(),myself.smallBlindBet,myself.bigBlindBet,myself.playNum,constant.MAX_PLAYNUM)){
-                                            console.log('根据自己手牌估算输掉的概率1')
-                                            preflopThreshold = GetPreFlopThreshold_loose();
-                                        }
-                                        else{
-                                            console.log('根据自己手牌估算输掉的概率2')
-                                            preflopThreshold = GetPreFlopThreshold_loose();
-                                        }
-                                        console.log('---------preflopThreshold-------------', preflopThreshold)
-                                        //如果阈值允许，则加注相应的数量
-                                        if(preflopThreshold.raiseThreshold>2*myself.detaCallBet-precision && preflopThreshold.raiseThreshold-myself.detaCallBet>myself.leastRaiseBet && myself.preflopRaiseCnt<myself.maxRaiseNum){
-                                            myself.preflopRaiseCnt++;
-                                            type = 5;
-                                            money = Math.floor((preflopThreshold.raiseThreshold-myself.detaCallBet)/myself.leastRaiseBet)*myself.leastRaiseBet
-                                            console.log('加注----------')
-                                        }
-                                        //否则，能让则让
-                                        else if(myself.detaCallBet==0){
-                                            type = 7;console.log('让注----------')
-                                        }
-                                        //否则，如果阈值允许，则跟
-                                        else if(preflopThreshold.followThreshold>myself.detaCallBet || preflopThreshold.followThreshold>=myself.link.MySeat().jetton){
-                                            type = 4;
-                                            money = myself.detaCallBet;
-                                            console.log('跟注----------')
-                                        }
-                                        //否则，弃牌
-                                        else{
-                                            type = 8;
-                                            console.log('弃牌----------')
-                                        }
-                                    }else if(myself.gameStatus==4 && myself.link.MySeat().isFold==false && myself.link.MySeat().isAllin==false){ //牌局状态 翻牌
-                                        console.log('牌局状态 翻牌-----------------------')
-                                        console.log('牌局状态 翻牌--------------------------- myself.link.MySeat().jetton',myself.link.MySeat().jetton)
-                                        let flopThreshold = GetFlopThreshold_ungar();
-                                        console.log('牌局状态 翻牌 flopThreshold', flopThreshold)
-                                        //如果阈值允许，则加注相应的数量
-                                        if(flopThreshold.raiseThreshold>2*myself.detaCallBet-precision && flopThreshold.raiseThreshold-myself.detaCallBet>myself.leastRaiseBet && myself.flopRaiseCnt<myself.maxRaiseNum){
-                                            myself.flopRaiseCnt++;
-                                            type = 5;
-                                            money = Math.floor((flopThreshold.raiseThreshold-myself.detaCallBet)/myself.leastRaiseBet)*myself.leastRaiseBet;
-                                            console.log('翻牌加注---------- money', money)
-                                        }
-                                        //否则，能让则让
-                                        else if(myself.detaCallBet===0){
-                                            type = 7;console.log('翻牌让注----------')
-                                        }
-                                        //否则，如果阈值允许，则跟
-                                        else if(flopThreshold.followThreshold>myself.detaCallBet || flopThreshold.followThreshold>myself.link.MySeat().jetton){
-                                            type = 4;
-                                            money = myself.detaCallBet;
-                                            console.log('翻牌跟注----------')
-                                        }
-                                        //否则，弃牌
-                                        else{
-                                            type = 8;
-                                            console.log('翻牌弃牌----------')
-                                        }
-                                    }else if(myself.gameStatus==5 && myself.link.MySeat().isFold==false && myself.link.MySeat().isAllin==false){//牌局状态 转牌（发第四张公共牌）
-                                        console.log('牌局状态 转牌---------------------------')
-                                        console.log('牌局状态 转牌--------------------------- myself.link.MySeat().jetton',myself.link.MySeat().jetton)
-                                        let turnThreshold = GetTurnThreshold_ungar();
-                                        console.log('牌局状态 转牌 turnThreshold', turnThreshold)
-                                        //如果阈值允许，则加注相应的数量
-                                        if(turnThreshold.raiseThreshold>2*myself.detaCallBet-precision && turnThreshold.raiseThreshold-myself.detaCallBet>myself.leastRaiseBet && myself.flopRaiseCnt<myself.maxRaiseNum){
-                                            myself.turnRaiseCnt++;
-                                            type = 5;
-                                            money = Math.floor((turnThreshold.raiseThreshold-myself.detaCallBet)/myself.leastRaiseBet)*myself.leastRaiseBet;
-                                            console.log('转牌加注----------')
-                                        }
-                                        //否则，能让则让
-                                        else if(myself.detaCallBet===0){
-                                            type = 7;console.log('转牌让注----------')
-                                        }
-                                        //否则，如果阈值允许，则跟
-                                        else if(turnThreshold.followThreshold>myself.detaCallBet || turnThreshold.followThreshold>myself.link.MySeat().jetton){
-                                            type = 4;
-                                            money = myself.detaCallBet;
-                                            console.log('转牌跟注----------')
-                                        }
-                                        //否则，弃牌
-                                        else{
-                                            type = 8;
-                                            console.log('转牌弃牌----------')
-                                        }
-                                    }else if(myself.gameStatus==6 && myself.link.MySeat().isFold==false && myself.link.MySeat().isAllin==false){//牌局状态 河牌（发第五张公共牌）
-                                        console.log('牌局状态 河牌---------------------------------')
-                                        console.log('牌局状态 河牌--------------------------- myself.link.MySeat().jetton',myself.link.MySeat().jetton)
-                                        let riverThreshold = GetRiverThreshold_ungar();
-                                        console.log('牌局状态 河牌 riverThreshold', riverThreshold)
-                                        //如果阈值允许，则加注相应的数量
-                                        if(riverThreshold.raiseThreshold>2*myself.detaCallBet-precision && riverThreshold.raiseThreshold-myself.detaCallBet>myself.leastRaiseBet && myself.riverRaiseCnt<myself.maxRaiseNum){
-                                            myself.riverRaiseCnt++;
-                                            type = 5;
-                                            money = Math.floor((riverThreshold.raiseThreshold-myself.detaCallBet)/myself.leastRaiseBet)*myself.leastRaiseBet;
-                                            console.log('河牌加注----------')
-                                        }
-                                        //否则，能让则让
-                                        else if(myself.detaCallBet===0){
-                                            type = 7;console.log('河牌让注----------')
-                                        }
-                                        //否则，如果阈值允许，则跟
-                                        else if(riverThreshold.followThreshold>myself.detaCallBet || riverThreshold.followThreshold>myself.link.MySeat().jetton){
-                                            type = 4;
-                                            money = myself.detaCallBet;
-                                            console.log('河牌跟注----------')
-                                        }
-                                        //否则，弃牌
-                                        else{
-                                            type = 8;
-                                            console.log('河牌弃牌----------')
-                                        }
-                                    }else if(myself.link.MySeat().isFold==false && myself.link.MySeat().isAllin==false){//牌局状态 摊牌
-                                        type = 7;console.log('其它状况    让注----------')
-                                    }
-                                }
-                                console.log('type', type) ; console.log('money', money)
-                                doAction(token, type, money);
+                                    // }
+                                    console.log('type', type);
+                                    console.log('money', money)
+                                    doAction(token, type, money);
 
-                                //自己下注后更新链表信息
-                                let curSeat = myself.link.GetPlayerByUser(msg.users_info[0].user)
-                                console.log('-------updatePlayerStatisticTable ---------')
-                                if(curSeat){
-                                    curSeat.money = msg.users_info[0].money;
-                                    curSeat.isFold = msg.users_info[0].user_status == 4?true:false;
-                                    curSeat.isAllin = msg.users_info[0].user_status == 5?true:false;
-                                    curSeat.bet = msg.users_info[0].wager;
-                                    curSeat.jetton = msg.users_info[0].money;
-                                    updatePlayerStatisticTable(curSeat, myself.gameStatus);
-                                    // console.log('after updatePlayerStatisticTable curSeat', curSeat)
+                                    //自己下注后更新链表信息
+                                    let curSeat = myself.link.GetPlayerByUser(msg.users_info[0].user)
+                                    console.log('-------updatePlayerStatisticTable ---------')
+                                    if (curSeat) {
+                                        curSeat.money = msg.users_info[0].money;
+                                        curSeat.isFold = msg.users_info[0].user_status == 4 ? true : false;
+                                        curSeat.isAllin = msg.users_info[0].user_status == 5 ? true : false;
+                                        curSeat.bet = msg.users_info[0].wager;
+                                        curSeat.jetton = msg.users_info[0].money;
+                                        updatePlayerStatisticTable(curSeat, myself.gameStatus);
+                                        // console.log('after updatePlayerStatisticTable curSeat', curSeat)
+                                    }
                                 }
                             }else if(msg.users_info[0].user !== config.player.user){
                                 if(msg.users_info[0].user_status == 6){//已经出局就T出allUserInfor所有的玩家数组中
@@ -349,15 +384,16 @@ function requstMessage(token, msgid) {
                             console.log('牌局状态', msg)
                             myself.gameStatus = msg.game_status;
                             if(msg.game_status == 1){   //牌局开始的时候应该更新所有用户信息
-                                console.log('-----------牌局开始了-------------')
+                                console.log('-----------牌局开始了------------- 牌局id:', msg.set_id)
+                                // myself.setIdFlag = msg.set_id;
                                 myself.playNum += 1;
                                 requstUserInfo(1);//更新到最新的用户信息
-
                             }else if(msg.game_status == 4 || msg.game_status == 5 || msg.game_status == 6 ){
                                 for(var i=0;i<myself.allUserInfor.length;i++){//当翻、转、河牌时，就把所有玩家的当轮已经投入的筹码清零
                                     myself.allUserInfor[i].wager = 0;
                                 }
                                 //每一阶段开始清空玩家的bet记录
+                                console.log('每一阶段开始清空玩家的bet记录 gameStatus', myself.gameStatus)
                                 myself.link.MySeat().bet = 0;
                                 myself.link.seek(myself.link.Me());	//定位到自己的位置
                                 while(myself.link.curNextSeat().user !== myself.link.MySeat().user){
@@ -373,17 +409,26 @@ function requstMessage(token, msgid) {
                                     let out = []
                                     out = _.difference(changeCards(ret.get('maxCardList')), changeCards(myself.holdCards))
                                     console.log('执行摊牌操作 out', out)
+                                    out = _.filter(changeCards(myself.commonCards), function(a){ return _.indexOf(out, a) !== -1 })
+                                    console.log('执行摊牌操作 正确排序之后out', out)
                                     showdown(token, out)
                                 } else
                                     showdown(token, [])
                             }else if(msg.game_status == 8){
-                                myself.allUserInfor.length = 0;//清空之前的对于玩家的记录
+                                console.log('结束 清空变量')
+                                if(myself.link) {
+                                    myself.link.clear();
+                                    myself.link = new playerLink()
+                                }
+                                myself.msg_id = 1, myself.seatinfos = [], myself.holdCards = [], myself.commonCards = [], myself.currentTotalCardCount = 0, myself.blind = 0, myself.allUserInfor = [], myself.gameStatus = 0, myself.statusFlag = 1, myself.imSmallBlind = false, myself.imBigBlind = false, myself.checkInFlop = false, myself.checkInTurn = false, myself.checkInRiver = false, myself.checkPreFlop = false, myself.cardType=null, myself.listenOuts=null, myself.oneHasAllIn = false, myself.listenType=null, myself.iamListeningCard = false, myself.winrate = 0, myself.wager = 0, myself.myMoney = 0, myself.allUserSeatInfo = [], myself.me = {}, myself.bigBlindBet = 200, myself.preflopThreshold = {}, myself.myListenWinProba = 0, myself.smallBlindSeat = {}, myself.bigBlindSeat = {}, myself.otherSeats = {}, myself.jetton = 0, myself.totalPot = 0, myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.state = constant.state.PreFlop, myself.state_ff1 = constant.state.PreFlop, myself.leastRaiseBet=200, myself.opponentGoodHandsNum=0, myself.opponentGoodFlopLvl1Num=0, myself.opponentGoodFlopLvl2Num=0, myself.opponentGoodTurnLvl1Num=0, myself.opponentGoodTurnLvl2Num=0, myself.opponentGoodRiverLvl1Num=0, myself.opponentGoodRiverLvl2Num=0,myself.curCallBet=100, myself.lastCallBet=0, myself.detaCallBet=100, myself.preflopRaiseCnt=0, myself.maxRaiseNum = 1, myself.flopRaiseCnt=0, myself.turnRaiseCnt=0, myself.riverRaiseCnt=0, myself.totalPot=0, myself.playerMinJetton=32000, myself.playerMaxJetton=0, myself.totalMoney=100000, myself.totalMoneyPerPlayer=100000, myself.initJetton=2000, myself.smallBlindBet=100, myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.preflopLoseProba=0, myself.flopLoseProba=0, myself.turnLoseProba=0, myself.riverLoseProba=0;myself.allCards = []; myself.prefoldCheckCount = 0, myself.foldCheckCount = 0, myself.turnCheckCount = 0, myself.riverCheckCount = 0, myself.betStageNotEmpty = false;
+                                // requstUserInfo(1)
                             }
                             break;
                         case 3:
                             console.log('发底牌-----------------', msg)
                             if(msg.user == config.player.user && !myself.checkPreFlop){ //发底牌
                                 let cards = msg.cards;
+                                myself.allCards = myself.allCards.concat(_.cloneDeep(msg.cards))
                                 cards.forEach(function(card){
                                     let c = {};
                                     c.type = parseInt((card - 1)/13) + 1 ;
@@ -400,8 +445,8 @@ function requstMessage(token, msgid) {
                             break;
                         case 4:
                             console.log('下注中-----------------msg', msg)
-                            // let player = _.filter(myself.allUserInfor, {'user': msg.user})
-                            console.log('下注中----------------- allUserInfor', myself.allUserInfor)
+                            console.log('下注中-----------------myself.allUserInfor', myself.allUserInfor)
+                            console.log('下注中-----------------myself.blind', myself.blind)
                             myself.allUserInfor.forEach(function(user){
                                 if(myself.blind === 0 && user.user === msg.user && msg.money === 100){
                                     let seatInfo = new seatInfoService()
@@ -449,31 +494,31 @@ function requstMessage(token, msgid) {
                                     console.log('totalPot--------------', myself.totalPot)
                                 }
                             })
-                            console.log('下注后----------------- allUserInfor', myself.allUserInfor)
-
                             if(myself.blind===2){
+                                console.log('下注前先组装链表，大小盲注')
                                 onSeatInfo(myself); //下注前先计算位置，大小盲注
                                 myself.blind++;
                             }else if(myself.blind === 3){
                                 //每个玩家下注后就更新链表信息
                                 let curSeat = myself.link.GetPlayerByUser(msg.user)
-                                console.log('-------updatePlayerStatisticTable curSeat---------- curSeat.user', curSeat.user)
                                 if(curSeat){
+                                    console.log('-------updatePlayerStatisticTable-- curSeat.user', curSeat.user)
                                     curSeat.money = _.find(myself.allUserInfor, {user:msg.user}).money;
                                     curSeat.isFold = msg.wager_type === 8?true:false;
                                     curSeat.isAllin = msg.wager_type === 6?true:false;
                                     curSeat.bet = msg.money;
                                     curSeat.jetton = _.find(myself.allUserInfor, {user:msg.user}).money;
-                                    console.log('updatePlayerStatisticTable', curSeat.bet, curSeat.jetton)
+                                    console.log('------------- updatePlayerStatisticTable -------------', curSeat.bet, curSeat.jetton)
                                     updatePlayerStatisticTable(curSeat, myself.gameStatus);
                                     // console.log('after updatePlayerStatisticTable curSeat', curSeat)
                                 }
                             }
                             break;
                         case 5:
-                            console.log('发公共牌（翻牌，转牌，河牌）', msg.cards);
+                            console.log('---------发公共牌--------- msg', msg)
                             if(msg.public_cards_type == 1 && !myself.checkInFlop){//正在发牌的时候，取到牌并算取概率
-                                console.log('发公共牌 翻牌---------------')
+                                console.log('发公共牌 翻牌---------------', msg.cards)
+                                myself.allCards = myself.allCards.concat(_.cloneDeep(msg.cards));
                                 myself.commonCards = myself.commonCards.concat(msg.cards);
                                 let cc = []
                                 myself.checkInFlop = true
@@ -486,7 +531,8 @@ function requstMessage(token, msgid) {
                                 });
                                 myself.commonCards = cc;
                             }else if(msg.public_cards_type == 2 && !myself.checkInTurn){
-                                console.log('发公共牌 转牌---------------')
+                                console.log('发公共牌 转牌---------------', msg.cards)
+                                myself.allCards = myself.allCards.concat(_.cloneDeep(msg.cards))
                                 let cc = []
                                 msg.cards.forEach(function(card){
                                     let c = {};
@@ -498,7 +544,8 @@ function requstMessage(token, msgid) {
                                 myself.commonCards = myself.commonCards.concat(cc);
                                 myself.checkInTurn = true
                             }else if(msg.public_cards_type == 3 && !myself.checkInRiver){
-                                console.log('发公共牌 河牌---------------')
+                                console.log('发公共牌 河牌---------------',msg.cards)
+                                myself.allCards = myself.allCards.concat(_.cloneDeep(msg.cards))
                                 let cc = []
                                 msg.cards.forEach(function(card){
                                     let c = {};
@@ -508,15 +555,21 @@ function requstMessage(token, msgid) {
                                     cc.push(c)
                                 });
                                 myself.commonCards = myself.commonCards.concat(cc);
-                                myself.checkInTurn = true
+                                myself.checkInRiver = true
                             }
                             console.log('发公共牌（翻牌，转牌，河牌）commonCards', myself.commonCards);
+                            console.log('发公共牌（翻牌，转牌，河牌）allCards', myself.allCards);
                             break;
                         case 6:
                             let data = msg.result;
                             console.log('-----------牌局结果------------', data)
-                            myself.msg_id = 1, myself.seatinfos = [], myself.holdCards = [], myself.commonCards = [], myself.currentTotalCardCount = 0, myself.blind = 0, myself.allUserInfor = [], myself.totalUser = 0, myself.gameStatus = 0, myself.statusFlag = 1, myself.imSmallBlind = false, myself.imBigBlind = false, myself.checkInFlop = false, myself.checkInTurn = false, myself.checkInRiver = false, myself.checkPreFlop = false, myself.cardType=null, myself.listenOuts=null, myself.oneHasAllIn = false, myself.listenType=null, myself.iamListeningCard = false, myself.winrate = 0, myself.wager = 0, myself.myMoney = 0, myself.allUserSeatInfo = [], myself.me = {}, myself.bigBlindBet = 200, myself.preflopThreshold = {}, myself.avtivePlayers = 0, myself.myListenWinProba = 0, myself.smallBlindSeat = {}, myself.bigBlindSeat = {}, myself.otherSeats = {}, myself.jetton = 0, myself.totalPot = 0, myself.link = new playerLink(), myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.state = constant.state.PreFlop, myself.state_ff1 = constant.state.PreFlop, myself.leastRaiseBet=200, myself.opponentGoodHandsNum=0, myself.opponentGoodFlopLvl1Num=0, myself.opponentGoodFlopLvl2Num=0, myself.opponentGoodTurnLvl1Num=0, myself.opponentGoodTurnLvl2Num=0, myself.opponentGoodRiverLvl1Num=0, myself.opponentGoodRiverLvl2Num=0, myself.flopInqNum=0, myself.curCallBet=100, myself.lastCallBet=0, myself.detaCallBet=100, myself.preflopRaiseCnt=0, myself.maxRaiseNum = 1, myself.flopRaiseCnt=0, myself.turnRaiseCnt=0, myself.riverRaiseCnt=0, myself.totalPot=0, myself.playerMinJetton=32000, myself.playerMaxJetton=0, myself.totalMoney=100000, myself.totalMoneyPerPlayer=100000, myself.initJetton=2000, myself.smallBlindBet=100, myself.bigBlindBet=200, myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.preflopLoseProba=0, myself.flopLoseProba=0, myself.turnLoseProba=0, myself.riverLoseProba=0;
-                            requstUserInfo(1)
+                            if(myself.link) {
+                                console.log('清空 link')
+                                myself.link.clear();
+                                myself.link = new playerLink()
+                            }
+                            myself.setIdFlag = msg.set_id;
+                            myself.msg_id = 1, myself.seatinfos = [], myself.holdCards = [], myself.commonCards = [], myself.currentTotalCardCount = 0, myself.blind = 0, myself.allUserInfor = [], myself.gameStatus = 0, myself.statusFlag = 1, myself.imSmallBlind = false, myself.imBigBlind = false, myself.checkInFlop = false, myself.checkInTurn = false, myself.checkInRiver = false, myself.checkPreFlop = false, myself.cardType=null, myself.listenOuts=null, myself.oneHasAllIn = false, myself.listenType=null, myself.iamListeningCard = false, myself.winrate = 0, myself.wager = 0, myself.myMoney = 0, myself.allUserSeatInfo = [], myself.me = {}, myself.bigBlindBet = 200, myself.preflopThreshold = {}, myself.myListenWinProba = 0, myself.smallBlindSeat = {}, myself.bigBlindSeat = {}, myself.otherSeats = {}, myself.jetton = 0, myself.totalPot = 0, myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.state = constant.state.PreFlop, myself.state_ff1 = constant.state.PreFlop, myself.leastRaiseBet=200, myself.opponentGoodHandsNum=0, myself.opponentGoodFlopLvl1Num=0, myself.opponentGoodFlopLvl2Num=0, myself.opponentGoodTurnLvl1Num=0, myself.opponentGoodTurnLvl2Num=0, myself.opponentGoodRiverLvl1Num=0, myself.opponentGoodRiverLvl2Num=0,myself.curCallBet=100, myself.lastCallBet=0, myself.detaCallBet=100, myself.preflopRaiseCnt=0, myself.maxRaiseNum = 1, myself.flopRaiseCnt=0, myself.turnRaiseCnt=0, myself.riverRaiseCnt=0, myself.totalPot=0, myself.playerMinJetton=32000, myself.playerMaxJetton=0, myself.totalMoney=100000, myself.totalMoneyPerPlayer=100000, myself.initJetton=2000, myself.smallBlindBet=100, myself.money_1st=0, myself.money_2nd=0, myself.money_3rd=0, myself.preflopLoseProba=0, myself.flopLoseProba=0, myself.turnLoseProba=0, myself.riverLoseProba=0;myself.allCards = []; myself.prefoldCheckCount = 0, myself.foldCheckCount = 0, myself.turnCheckCount = 0, myself.riverCheckCount = 0, myself.betStageNotEmpty = false;
                             break;
                     }
                 }
@@ -561,13 +614,10 @@ function showdown(token, cards) {
 };
 
 function onSeatInfo(player) {
-    console.log('in onSeatInfo=====================')
     opponentGoodHandsNum = 0;
     opponentGoodFlopLvl1Num = 0;
     opponentGoodTurnLvl1Num = 0;
     opponentGoodRiverLvl1Num = 0;
-    flopInqNum = 0;
-
     myself.link.setPlayerOfMe(myself);
     myself.link.add(_.find(myself.allUserSeatInfo, {isSmallBlind: true}));
     myself.link.add(_.find(myself.allUserSeatInfo, {isBigBlind: true}));
@@ -609,10 +659,15 @@ function onSeatInfo(player) {
         medianTurnBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getMedianTurnBet(myself.playNum - 1, myself.playNum - 1),
         medianRiverBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getMedianRiverBet(myself.playNum - 1, myself.playNum - 1),
         maxMedianBet = 0;
+    console.log('下注量----onSeatInfo-------- myself.playNum - 1',myself.playNum - 1)
     console.log('下注量----onSeatInfo-------- avgPreflopBet',avgPreflopBet)
     console.log('下注量----onSeatInfo-------- avgFlopBet',avgFlopBet)
     console.log('下注量----onSeatInfo-------- avgTurnBet',avgTurnBet)
     console.log('下注量----onSeatInfo-------- avgRiverBet',avgRiverBet)
+    console.log('下注量----onSeatInfo-------- medianPreflopBet',medianPreflopBet)
+    console.log('下注量----onSeatInfo-------- medianFlopBet',medianFlopBet)
+    console.log('下注量----onSeatInfo-------- medianTurnBet',medianTurnBet)
+    console.log('下注量----onSeatInfo-------- medianRiverBet',medianRiverBet)
     if (avgFlopBet > maxAvgBet)
         maxAvgBet = avgFlopBet;
     if (avgTurnBet > maxAvgBet)
@@ -627,13 +682,12 @@ function onSeatInfo(player) {
     if (medianRiverBet > maxMedianBet)
         maxMedianBet = medianRiverBet;
 
-    myself.link.CurrentSeat().UpdatePreflopThreshold(avgPreflopBet, medianPreflopBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateFlopThreshold(avgFlopBet, medianFlopBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateTurnThreshold(avgTurnBet, medianTurnBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateRiverThreshold(avgRiverBet, medianRiverBet, bigBlindBet);
+    myself.link.CurrentSeat().UpdatePreflopThreshold(avgPreflopBet, medianPreflopBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateFlopThreshold(avgFlopBet, medianFlopBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateTurnThreshold(avgTurnBet, medianTurnBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateRiverThreshold(avgRiverBet, medianRiverBet, myself.bigBlindBet);
 
     //加注量
-    console.log('加注量----11111--------')
     let avgPreflopRaiseBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getAvgPreflopRaiseBet(myself.playNum - 1, constant.PREFLOP_THRESHOLD_CALC_NUM),
         avgFlopRaiseBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getAvgFlopRaiseBet(myself.playNum - 1, constant.FLOP_THRESHOLD_CALC_NUM),
         avgTurnRaiseBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getAvgTurnRaiseBet(myself.playNum - 1, myself.playNum - 1),
@@ -658,11 +712,10 @@ function onSeatInfo(player) {
         maxMedianRaiseBet = medianTurnRaiseBet;
     if (medianRiverRaiseBet > maxMedianRaiseBet)
         maxMedianRaiseBet = medianRiverRaiseBet;
-    console.log('加注量----22222222222--------')
-    myself.link.CurrentSeat().UpdatePreflopRaiseThreshold(avgPreflopRaiseBet, medianPreflopRaiseBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateFlopRaiseThreshold(avgFlopRaiseBet, medianFlopRaiseBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateTurnRaiseThreshold(avgTurnRaiseBet, medianTurnRaiseBet, bigBlindBet);
-    myself.link.CurrentSeat().UpdateRiverRaiseThreshold(avgRiverRaiseBet, medianRiverRaiseBet, bigBlindBet);
+    myself.link.CurrentSeat().UpdatePreflopRaiseThreshold(avgPreflopRaiseBet, medianPreflopRaiseBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateFlopRaiseThreshold(avgFlopRaiseBet, medianFlopRaiseBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateTurnRaiseThreshold(avgTurnRaiseBet, medianTurnRaiseBet, myself.bigBlindBet);
+    myself.link.CurrentSeat().UpdateRiverRaiseThreshold(avgRiverRaiseBet, medianRiverRaiseBet, myself.bigBlindBet);
 
     //入局率
     myself.link.CurrentSeat().incomingRate = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getIncomingRate(myself.playNum - 1, myself.playNum - 1);
@@ -711,10 +764,10 @@ function onSeatInfo(player) {
         if (medianRiverBet > maxMedianBet)
             maxMedianBet = medianRiverBet;
 
-        myself.link.CurrentSeat().UpdatePreflopThreshold(avgPreflopBet, medianPreflopBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateFlopThreshold(avgFlopBet, medianFlopBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateTurnThreshold(avgTurnBet, medianTurnBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateRiverThreshold(avgRiverBet, medianRiverBet, bigBlindBet);
+        myself.link.CurrentSeat().UpdatePreflopThreshold(avgPreflopBet, medianPreflopBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateFlopThreshold(avgFlopBet, medianFlopBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateTurnThreshold(avgTurnBet, medianTurnBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateRiverThreshold(avgRiverBet, medianRiverBet, myself.bigBlindBet);
         //加注量
         avgPreflopRaiseBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getAvgPreflopRaiseBet(myself.playNum - 1, myself.playNum - 1);
         avgFlopRaiseBet = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getAvgFlopRaiseBet(myself.playNum - 1, myself.playNum - 1);
@@ -739,14 +792,15 @@ function onSeatInfo(player) {
         if (medianRiverRaiseBet > maxMedianRaiseBet)
             maxMedianRaiseBet = medianRiverRaiseBet;
 
-        myself.link.CurrentSeat().UpdatePreflopRaiseThreshold(avgPreflopRaiseBet, medianPreflopRaiseBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateFlopRaiseThreshold(avgFlopRaiseBet, medianFlopRaiseBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateTurnRaiseThreshold(avgTurnRaiseBet, medianTurnRaiseBet, bigBlindBet);
-        myself.link.CurrentSeat().UpdateRiverRaiseThreshold(avgRiverRaiseBet, medianRiverRaiseBet, bigBlindBet);
+        myself.link.CurrentSeat().UpdatePreflopRaiseThreshold(avgPreflopRaiseBet, medianPreflopRaiseBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateFlopRaiseThreshold(avgFlopRaiseBet, medianFlopRaiseBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateTurnRaiseThreshold(avgTurnRaiseBet, medianTurnRaiseBet, myself.bigBlindBet);
+        myself.link.CurrentSeat().UpdateRiverRaiseThreshold(avgRiverRaiseBet, medianRiverRaiseBet, myself.bigBlindBet);
 
         //入局率
         myself.link.CurrentSeat().incomingRate = myself.playerStatisticTable.get(myself.link.CurrentSeat().user).getIncomingRate(myself.playNum - 1, myself.playNum - 1);
     }
+    
         myself.playerStatisticTable.forEach(function (value, key) {
             value.preflopRaiseNumFlag = false;
             value.flopRaiseNumFlag = false;
@@ -762,6 +816,7 @@ function onSeatInfo(player) {
             value.turnRaiseBet.push(-1);
             value.riverRaiseBet.push(-1);
         })
+
         myself.state = constant.state.PreFlop;
         myself.state_ff1 = constant.state.PreFlop;
     myself.link.seek(myself.link.Me());	//定位到自己的位置
@@ -780,7 +835,6 @@ function onSeatInfo(player) {
             myself.link.CurrentSeat().riverRaiseBet = -1;
         }
         //如果游戏刚刚开始，那么计算所有玩家的总钱数
-        console.log('如果游戏刚刚开始')
         if (myself.playNum === 1) {
             myself.totalMoneyPerPlayer = myself.link.MySeat().jetton;
             myself.initJetton = myself.link.MySeat().jetton;
@@ -810,11 +864,174 @@ function GetPreFlopThreshold_loose(){
     if(myself.holdCards[0].type === myself.holdCards[1].type)
         isSuite=1;
     let myWinProba=constant.handProbaTable[isSuite][myself.holdCards[0].point][myself.holdCards[1].point];
-    doSomething(betUnit);
-    handLvl = constant.handProbaTable[isSuite][myself.holdCards[0].point][myself.holdCards[1].point];
+    let handLvl = constant.handProbaTable[isSuite][myself.holdCards[0].point][myself.holdCards[1].point];
+    let handLvlThreshold = 6;
+    let frontNum=0, backNum=0, preflopFrontNum=0, preflopBackNum=0, backCrazyOpponentNum=0, crazyOpponentNum=0,
+        backGoodHandsNum=0;
+    opponentGoodHandsNum=0;
+    opponentGoodFlopLvl1Num=0;
+    opponentGoodTurnLvl1Num=0;
+    opponentGoodRiverLvl1Num=0;
+    let oppoPreflopBet=0, maxOppoPreflopBet=0, minOppoPreflopBet=1000, maxPreflopLvl1Threshold=0, minPreflopLvl1Threshold=1000, maxPreflopRaiseLvl1Threshold=0, minPreflopRaiseLvl1Threshold=1000, oppoFlopBet=0, maxOppoFlopBet=0, minOppoFlopBet=1000, maxFlopLvl1Threshold=0, minFlopLvl1Threshold=1000, maxFlopLvl2Threshold=0, minFlopLvl2Threshold=2000, maxFlopRaiseLvl1Threshold=0, minFlopRaiseLvl1Threshold=1000, maxFlopRaiseLvl2Threshold=0, minFlopRaiseLvl2Threshold=2000, oppoTurnBet=0, maxOppoTurnBet=0, minOppoTurnBet=1000, maxTurnLvl1Threshold=0, minTurnLvl1Threshold=1000, maxTurnLvl2Threshold=0, minTurnLvl2Threshold=2000, maxTurnRaiseLvl1Threshold=0, minTurnRaiseLvl1Threshold=1000, maxTurnRaiseLvl2Threshold=0, minTurnRaiseLvl2Threshold=2000, oppoRiverBet=0, maxOppoRiverBet=0, minOppoRiverBet=1000, maxRiverLvl1Threshold=0, minRiverLvl1Threshold=1000, maxRiverLvl2Threshold=0, minRiverLvl2Threshold=2000, maxRiverRaiseLvl1Threshold=0, minRiverRaiseLvl1Threshold=1000, maxRiverRaiseLvl2Threshold=0, minRiverRaiseLvl2Threshold=2000;
+
+    myself.link.seek(myself.link.Me());
+    let curSeat = new seatInfoService();
+    curSeat = myself.link.GetNextActive();
+    while(curSeat !== null && !curSeat.user===myself.link.MySeat().user){
+        //preflop
+        oppoPreflopBet=curSeat.preflopBet;
+        if(minOppoPreflopBet>oppoPreflopBet){
+            minOppoPreflopBet=oppoPreflopBet;
+        }
+        if(oppoPreflopBet>maxOppoPreflopBet){
+            maxOppoPreflopBet=oppoPreflopBet;
+        }
+        if(minPreflopLvl1Threshold>curSeat.preflopLvl1Threshold){
+            minPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
+        }
+        if(maxPreflopLvl1Threshold<curSeat.preflopLvl1Threshold){
+            maxPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
+        }
+        //所有对手中最大的加注量阈值
+        if(minPreflopRaiseLvl1Threshold>curSeat.preflopRaiseLvl1Threshold){
+            minPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
+        }
+        if(maxPreflopRaiseLvl1Threshold<curSeat.preflopRaiseLvl1Threshold){
+            maxPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
+        }
+        //flop
+        oppoFlopBet=curSeat.flopBet;
+        if(minOppoFlopBet>oppoFlopBet){
+            minOppoFlopBet=oppoFlopBet;
+        }
+        if(oppoFlopBet>maxOppoFlopBet){
+            maxOppoFlopBet=oppoFlopBet;
+        }
+        if(minFlopLvl1Threshold>curSeat.flopLvl1Threshold){
+            minFlopLvl1Threshold=curSeat.flopLvl1Threshold;
+        }
+        if(maxFlopLvl1Threshold<curSeat.flopLvl1Threshold){
+            maxFlopLvl1Threshold=curSeat.flopLvl1Threshold;
+        }
+        if(minFlopLvl2Threshold>curSeat.flopLvl2Threshold){
+            minFlopLvl2Threshold=curSeat.flopLvl2Threshold;
+        }
+        if(maxFlopLvl2Threshold<curSeat.flopLvl2Threshold){
+            maxFlopLvl2Threshold=curSeat.flopLvl2Threshold;
+        }
+        //所有对手中最大的加注量阈值
+        if(minFlopRaiseLvl1Threshold>curSeat.flopRaiseLvl1Threshold){
+            minFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
+        }
+        if(maxFlopRaiseLvl1Threshold<curSeat.flopRaiseLvl1Threshold){
+            maxFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
+        }
+        if(minFlopRaiseLvl2Threshold>curSeat.flopRaiseLvl2Threshold){
+            minFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
+        }
+        if(maxFlopRaiseLvl2Threshold<curSeat.flopRaiseLvl2Threshold){
+            maxFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
+        }
+        //turn
+        oppoTurnBet=curSeat.turnBet;
+        if(minOppoTurnBet>oppoTurnBet){
+            minOppoTurnBet=oppoTurnBet;
+        }
+        if(oppoTurnBet>maxOppoTurnBet){
+            maxOppoTurnBet=oppoTurnBet;
+        }
+        if(minTurnLvl1Threshold>curSeat.turnLvl1Threshold){
+            minTurnLvl1Threshold=curSeat.turnLvl1Threshold;
+        }
+        if(maxTurnLvl1Threshold<curSeat.turnLvl1Threshold){
+            maxTurnLvl1Threshold=curSeat.turnLvl1Threshold;
+        }
+        if(minTurnLvl2Threshold>curSeat.turnLvl2Threshold){
+            minTurnLvl2Threshold=curSeat.turnLvl2Threshold;
+        }
+        if(maxTurnLvl2Threshold<curSeat.turnLvl2Threshold){
+            maxTurnLvl2Threshold=curSeat.turnLvl2Threshold;
+        }
+        //所有对手中最大的加注量阈值
+        if(minTurnRaiseLvl1Threshold>curSeat.turnRaiseLvl1Threshold){
+            minTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
+        }
+        if(maxTurnRaiseLvl1Threshold<curSeat.turnRaiseLvl1Threshold){
+            maxTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
+        }
+        if(minTurnRaiseLvl2Threshold>curSeat.turnRaiseLvl2Threshold){
+            minTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
+        }
+        if(maxTurnRaiseLvl2Threshold<curSeat.turnRaiseLvl2Threshold){
+            maxTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
+        }
+        //river
+        oppoRiverBet=curSeat.riverBet;
+        if(minOppoRiverBet>oppoRiverBet){
+            minOppoRiverBet=oppoRiverBet;
+        }
+        if(oppoRiverBet>maxOppoRiverBet){
+            maxOppoRiverBet=oppoRiverBet;
+        }
+        if(minRiverLvl1Threshold>curSeat.riverLvl1Threshold){
+            minRiverLvl1Threshold=curSeat.riverLvl1Threshold;
+        }
+        if(maxRiverLvl1Threshold<curSeat.riverLvl1Threshold){
+            maxRiverLvl1Threshold=curSeat.riverLvl1Threshold;
+        }
+        //所有对手中最大的加注量阈值
+        if(minRiverRaiseLvl1Threshold>curSeat.riverRaiseLvl1Threshold){
+            minRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
+        }
+        if(maxRiverRaiseLvl1Threshold<curSeat.riverRaiseLvl1Threshold){
+            maxRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
+        }
+        if(curSeat.preflopLvl1Threshold>5*betUnit){
+            crazyOpponentNum++;
+        }
+        if(myself.link.MySeat().positionIndex > curSeat.positionIndex){
+            frontNum++;
+        } else{
+            backNum++;
+            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)){
+                curSeat.hasGoodHand = true;
+                backGoodHandsNum++;
+            }
+        }
+        //位置统计
+        if(myself.link.MySeat().isBigBlind || (myself.link.MySeat().isSmallBlind && !myself.link.MySeat().isBigBlind) || (myself.link.MySeat().positionIndex>curSeat.positionIndex && !curSeat.isBigBlind && !curSeat.isSmallBlind)){
+            preflopFrontNum++;
+        } else{
+            preflopBackNum++;
+            if(curSeat.preflopLvl1Threshold>5*betUnit){
+                backCrazyOpponentNum++;
+            }
+        }
+        if(curSeat.preflopBet>precision){
+            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)){
+                curSeat.hasGoodHand = true;
+                opponentGoodHandsNum++;
+            }
+            if(oppoFlopBet>=Math.max(curSeat.flopLvl1Threshold, myself.bigBlindBet)){
+                curSeat.hasGoodFlopLvl1 = true;
+                opponentGoodFlopLvl1Num++;
+            }
+            if(oppoTurnBet>=Math.max(curSeat.getTurnLvl1Threshold, myself.bigBlindBet)){
+                curSeat.hasGoodTurnLvl1 = true;
+                opponentGoodTurnLvl1Num++;
+            }
+            if(oppoRiverBet>=Math.max(curSeat.getRiverLvl1Threshold, myself.bigBlindBet)){
+                curSeat.hasGoodRiverLvl1 = true;
+                opponentGoodRiverLvl1Num++;
+            }
+        }
+        curSeat = myself.link.GetNextActive();
+        console.log('end curSeat', curSeat)
+    }
 
     //如果在button位
     if(1>backNum){
+        console.log('如果在button位 myWinProba', myWinProba)
         //手牌为对A
         if(myWinProba>0.67){
             //加注进入
@@ -1059,6 +1276,7 @@ function GetFlopThreshold_ungar() {
         }
     }
     myListenWinProba=listenOuts*4*0.01;
+    opponentGoodHandsNum=0;opponentGoodFlopLvl1Num=0;opponentGoodTurnLvl1Num=0;opponentGoodRiverLvl1Num=0;
     let myWinProba = 1;
     let frontNum=0,
         backNum=0, backCrazyOpponentNum=0, crazyOpponentNum=0, oppoPreflopBet=0, maxOppoPreflopBet=0,
@@ -1191,7 +1409,7 @@ function GetFlopThreshold_ungar() {
             }
         }
         if (curSeat.preflopBet > precision) {
-            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodHand = true;
                 opponentGoodHandsNum++;
             }
@@ -1199,11 +1417,11 @@ function GetFlopThreshold_ungar() {
                 curSeat.hasGoodFlopLvl1 = true;
                 opponentGoodFlopLvl1Num++;
             }
-            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodTurnLvl1 = true;
                 opponentGoodTurnLvl1Num++;
             }
-            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodRiverLvl1 = true;
                 opponentGoodRiverLvl1Num++;
             }
@@ -1212,7 +1430,7 @@ function GetFlopThreshold_ungar() {
         console.log('end curSeat', curSeat)
     }
     //概率调整，如果推测对手有好的起手，就按照松紧概率中的较大者概率来算
-    if(opponentGoodHandsNum>0 && avtivePlayers<3){
+    if(opponentGoodHandsNum>0 && myself.link.GetActivePlayerNum()<3){
         myWinProba=cardProba[1].winProba+cardProba[1].drawProba;
     }
     if(opponentGoodHandsNum>0){
@@ -1223,7 +1441,7 @@ function GetFlopThreshold_ungar() {
     //如果在button位
     let totalPot = myself.totalPot
     if(1 > backNum){
-        console.log('如果在button位')
+        console.log('如果在button位 opponentGoodFlopLvl1Num', opponentGoodFlopLvl1Num)
         if( opponentGoodFlopLvl1Num>1){
             if(myWinProba>0.999){
                 raiseThreshold=myself.link.MySeat().jetton+precision;
@@ -1319,6 +1537,7 @@ function GetFlopThreshold_ungar() {
     }
     //如果在靠前的位置
     else if(opponentGoodFlopLvl1Num>1){
+        console.log('如果在靠前的位置 opponentGoodFlopLvl1Num', opponentGoodFlopLvl1Num)
         if(myWinProba>0.999){
             raiseThreshold=myself.link.MySeat().jetton+precision;
             followThreshold=myself.link.MySeat().jetton+precision;
@@ -1469,6 +1688,7 @@ function GetRiverThreshold_ungar() {
         }
     }
     myListenWinProba=listenOuts*0*0.01;
+    opponentGoodHandsNum=0;opponentGoodFlopLvl1Num=0;opponentGoodTurnLvl1Num=0;opponentGoodRiverLvl1Num=0;
     let myWinProba = 1;
     let frontNum=0,
      backNum=0, backCrazyOpponentNum=0, crazyOpponentNum=0, oppoPreflopBet=0, maxOppoPreflopBet=0,
@@ -1603,7 +1823,7 @@ function GetRiverThreshold_ungar() {
             }
         }
         if (curSeat.preflopBet > precision) {
-            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodHand = true;
                 opponentGoodHandsNum++;
             }
@@ -1611,11 +1831,11 @@ function GetRiverThreshold_ungar() {
                 curSeat.hasGoodFlopLvl1 = true;
                 opponentGoodFlopLvl1Num++;
             }
-            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodTurnLvl1 = true;
                 opponentGoodTurnLvl1Num++;
             }
-            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodRiverLvl1 = true;
                 opponentGoodRiverLvl1Num++;
             }
@@ -1635,6 +1855,7 @@ function GetRiverThreshold_ungar() {
     //如果在button位
     let totalPot = myself.totalPot
     if(1>backNum){
+        console.log('如果在button位 opponentGoodFlopLvl1Num', opponentGoodRiverLvl1Num)
         if(opponentGoodRiverLvl1Num>0){
             if(myWinProba>0.999){
                 raiseThreshold=Math.max(2* totalPot, betUnit);
@@ -1709,6 +1930,8 @@ function GetRiverThreshold_ungar() {
     }
     //如果在靠前的位置
     else{
+        console.log('如果在靠前的位置 opponentGoodFlopLvl1Num', opponentGoodRiverLvl1Num)
+        console.log('如果在靠前的位置 opponentGoodTurnLvl1Num', opponentGoodTurnLvl1Num)
         if(opponentGoodRiverLvl1Num>0 || opponentGoodTurnLvl1Num>0){
             if(myWinProba>0.999){
                 raiseThreshold=Math.max(2 * totalPot, betUnit);
@@ -1782,165 +2005,6 @@ function GetRiverThreshold_ungar() {
     return {raiseThreshold: raiseThreshold, followThreshold: followThreshold};
 }
 
-function doSomething(betUnit){
-    console.log('in doSomething')
-    myself.link.seek(myself.link.Me());
-    let curSeat = new seatInfoService();
-    curSeat = myself.link.GetNextActive();
-    // console.log('in doSomething curSeat', curSeat)
-    while(curSeat !== null && !curSeat.user===myself.link.MySeat().user){
-        //preflop
-        oppoPreflopBet=curSeat.preflopBet;
-        if(minOppoPreflopBet>oppoPreflopBet){
-            minOppoPreflopBet=oppoPreflopBet;
-        }
-        if(oppoPreflopBet>maxOppoPreflopBet){
-            maxOppoPreflopBet=oppoPreflopBet;
-        }
-        if(minPreflopLvl1Threshold>curSeat.preflopLvl1Threshold){
-            minPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
-        }
-        if(maxPreflopLvl1Threshold<curSeat.preflopLvl1Threshold){
-            maxPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minPreflopRaiseLvl1Threshold>curSeat.preflopRaiseLvl1Threshold){
-            minPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
-        }
-        if(maxPreflopRaiseLvl1Threshold<curSeat.preflopRaiseLvl1Threshold){
-            maxPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
-        }
-        //flop
-        oppoFlopBet=curSeat.flopBet;
-        if(minOppoFlopBet>oppoFlopBet){
-            minOppoFlopBet=oppoFlopBet;
-        }
-        if(oppoFlopBet>maxOppoFlopBet){
-            maxOppoFlopBet=oppoFlopBet;
-        }
-        if(minFlopLvl1Threshold>curSeat.flopLvl1Threshold){
-            minFlopLvl1Threshold=curSeat.flopLvl1Threshold;
-        }
-        if(maxFlopLvl1Threshold<curSeat.flopLvl1Threshold){
-            maxFlopLvl1Threshold=curSeat.flopLvl1Threshold;
-        }
-        if(minFlopLvl2Threshold>curSeat.flopLvl2Threshold){
-            minFlopLvl2Threshold=curSeat.flopLvl2Threshold;
-        }
-        if(maxFlopLvl2Threshold<curSeat.flopLvl2Threshold){
-            maxFlopLvl2Threshold=curSeat.flopLvl2Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minFlopRaiseLvl1Threshold>curSeat.flopRaiseLvl1Threshold){
-            minFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
-        }
-        if(maxFlopRaiseLvl1Threshold<curSeat.flopRaiseLvl1Threshold){
-            maxFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
-        }
-        if(minFlopRaiseLvl2Threshold>curSeat.flopRaiseLvl2Threshold){
-            minFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
-        }
-        if(maxFlopRaiseLvl2Threshold<curSeat.flopRaiseLvl2Threshold){
-            maxFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
-        }
-        //turn
-        oppoTurnBet=curSeat.turnBet;
-        if(minOppoTurnBet>oppoTurnBet){
-            minOppoTurnBet=oppoTurnBet;
-        }
-        if(oppoTurnBet>maxOppoTurnBet){
-            maxOppoTurnBet=oppoTurnBet;
-        }
-        if(minTurnLvl1Threshold>curSeat.turnLvl1Threshold){
-            minTurnLvl1Threshold=curSeat.turnLvl1Threshold;
-        }
-        if(maxTurnLvl1Threshold<curSeat.turnLvl1Threshold){
-            maxTurnLvl1Threshold=curSeat.turnLvl1Threshold;
-        }
-        if(minTurnLvl2Threshold>curSeat.turnLvl2Threshold){
-            minTurnLvl2Threshold=curSeat.turnLvl2Threshold;
-        }
-        if(maxTurnLvl2Threshold<curSeat.turnLvl2Threshold){
-            maxTurnLvl2Threshold=curSeat.turnLvl2Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minTurnRaiseLvl1Threshold>curSeat.turnRaiseLvl1Threshold){
-            minTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
-        }
-        if(maxTurnRaiseLvl1Threshold<curSeat.turnRaiseLvl1Threshold){
-            maxTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
-        }
-        if(minTurnRaiseLvl2Threshold>curSeat.turnRaiseLvl2Threshold){
-            minTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
-        }
-        if(maxTurnRaiseLvl2Threshold<curSeat.turnRaiseLvl2Threshold){
-            maxTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
-        }
-        //river
-        oppoRiverBet=curSeat.riverBet;
-        if(minOppoRiverBet>oppoRiverBet){
-            minOppoRiverBet=oppoRiverBet;
-        }
-        if(oppoRiverBet>maxOppoRiverBet){
-            maxOppoRiverBet=oppoRiverBet;
-        }
-        if(minRiverLvl1Threshold>curSeat.riverLvl1Threshold){
-            minRiverLvl1Threshold=curSeat.riverLvl1Threshold;
-        }
-        if(maxRiverLvl1Threshold<curSeat.riverLvl1Threshold){
-            maxRiverLvl1Threshold=curSeat.riverLvl1Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minRiverRaiseLvl1Threshold>curSeat.riverRaiseLvl1Threshold){
-            minRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
-        }
-        if(maxRiverRaiseLvl1Threshold<curSeat.riverRaiseLvl1Threshold){
-            maxRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
-        }
-        if(curSeat.preflopLvl1Threshold>5*betUnit){
-            crazyOpponentNum++;
-        }
-        if(myself.link.MySeat().positionIndex > curSeat.positionIndex){
-            frontNum++;
-        } else{
-            backNum++;
-            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)){
-                curSeat.hasGoodHand = true;
-                backGoodHandsNum++;
-            }
-        }
-        //位置统计
-        if(myself.link.MySeat().isBigBlind || (myself.link.MySeat().isSmallBlind && !myself.link.MySeat().isBigBlind) || (myself.link.MySeat().positionIndex>curSeat.positionIndex && !curSeat.isBigBlind && !curSeat.isSmallBlind)){
-            preflopFrontNum++;
-        } else{
-            preflopBackNum++;
-            if(curSeat.preflopLvl1Threshold>5*betUnit){
-                backCrazyOpponentNum++;
-            }
-        }
-        if(curSeat.preflopBet>precision){
-            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodHand = true;
-                opponentGoodHandsNum++;
-            }
-            if(oppoFlopBet>=Math.max(curSeat.flopLvl1Threshold, myself.bigBlindBet)){
-                curSeat.hasGoodFlopLvl1 = true;
-                opponentGoodFlopLvl1Num++;
-            }
-            if(oppoTurnBet>=Math.max(curSeat.getTurnLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodTurnLvl1 = true;
-                opponentGoodTurnLvl1Num++;
-            }
-            if(oppoRiverBet>=Math.max(curSeat.getRiverLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodRiverLvl1 = true;
-                opponentGoodRiverLvl1Num++;
-            }
-        }
-        curSeat = myself.link.GetNextActive();
-        console.log('end curSeat', curSeat)
-    }
-}
-
 function GetTurnThreshold_ungar() {
     console.log('in GetTurnThreshold_ungar')
     //浮点计算的精确度
@@ -2006,6 +2070,7 @@ function GetTurnThreshold_ungar() {
     }
     myListenWinProba=listenOuts*2*0.01;
     let myWinProba = 1;
+    opponentGoodHandsNum=0;opponentGoodFlopLvl1Num=0;opponentGoodTurnLvl1Num=0;opponentGoodRiverLvl1Num=0;
     let frontNum=0,
         backNum=0, backCrazyOpponentNum=0, crazyOpponentNum=0, oppoPreflopBet=0, maxOppoPreflopBet=0,
         minOppoPreflopBet=1000, maxPreflopLvl1Threshold=0, minPreflopLvl1Threshold=1000, maxPreflopRaiseLvl1Threshold=0, minPreflopRaiseLvl1Threshold=1000,
@@ -2014,7 +2079,6 @@ function GetTurnThreshold_ungar() {
     myself.link.seek(myself.link.Me());
     let curSeat = new seatInfoService();
     curSeat = myself.link.GetNextActive();
-    // console.log('in doSomething curSeat', curSeat)
     while(curSeat !== null && !curSeat.user===myself.link.MySeat().user) {
         //preflop
         oppoPreflopBet = curSeat.preflopBet;
@@ -2138,7 +2202,7 @@ function GetTurnThreshold_ungar() {
             }
         }
         if (curSeat.preflopBet > precision) {
-            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoPreflopBet >= Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodHand = true;
                 opponentGoodHandsNum++;
             }
@@ -2146,11 +2210,11 @@ function GetTurnThreshold_ungar() {
                 curSeat.hasGoodFlopLvl1 = true;
                 opponentGoodFlopLvl1Num++;
             }
-            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoTurnBet >= Math.max(curSeat.getTurnLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodTurnLvl1 = true;
                 opponentGoodTurnLvl1Num++;
             }
-            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold(), myself.bigBlindBet)) {
+            if (oppoRiverBet >= Math.max(curSeat.getRiverLvl1Threshold, myself.bigBlindBet)) {
                 curSeat.hasGoodRiverLvl1 = true;
                 opponentGoodRiverLvl1Num++;
             }
@@ -2169,7 +2233,9 @@ function GetTurnThreshold_ungar() {
     }
     //如果在button位
     let totalPot = myself.totalPot
+    console.log('totalPot totalPot totalPot', totalPot)
     if(1>backNum){
+        console.log('如果在button位 opponentGoodTurnLvl1Num', opponentGoodTurnLvl1Num)
         if(opponentGoodTurnLvl1Num>0){
             if(myWinProba>0.999){
                 raiseThreshold=Math.max(totalPot, betUnit);
@@ -2263,6 +2329,8 @@ function GetTurnThreshold_ungar() {
     }
     //如果在靠前的位置
     else{
+        console.log('如果在靠前的位置 opponentGoodTurnLvl1Num', opponentGoodTurnLvl1Num)
+        console.log('如果在靠前的位置 opponentGoodFlopLvl1Num', opponentGoodFlopLvl1Num)
         if(opponentGoodTurnLvl1Num>0 || opponentGoodFlopLvl1Num>0){
             if(myWinProba>0.999){
                 raiseThreshold=Math.max(totalPot, betUnit);
@@ -2352,166 +2420,11 @@ function GetTurnThreshold_ungar() {
     return {raiseThreshold: raiseThreshold, followThreshold: followThreshold};
 }
 
-function doSomething(betUnit){
-    console.log('in doSomething')
-    myself.link.seek(myself.link.Me());
-    let curSeat = new seatInfoService();
-    curSeat = myself.link.GetNextActive();
-    // console.log('in doSomething curSeat', curSeat)
-    while(curSeat !== null && !curSeat.user===myself.link.MySeat().user){
-        //preflop
-        oppoPreflopBet=curSeat.preflopBet;
-        if(minOppoPreflopBet>oppoPreflopBet){
-            minOppoPreflopBet=oppoPreflopBet;
-        }
-        if(oppoPreflopBet>maxOppoPreflopBet){
-            maxOppoPreflopBet=oppoPreflopBet;
-        }
-        if(minPreflopLvl1Threshold>curSeat.preflopLvl1Threshold){
-            minPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
-        }
-        if(maxPreflopLvl1Threshold<curSeat.preflopLvl1Threshold){
-            maxPreflopLvl1Threshold=curSeat.preflopLvl1Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minPreflopRaiseLvl1Threshold>curSeat.preflopRaiseLvl1Threshold){
-            minPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
-        }
-        if(maxPreflopRaiseLvl1Threshold<curSeat.preflopRaiseLvl1Threshold){
-            maxPreflopRaiseLvl1Threshold=curSeat.preflopRaiseLvl1Threshold;
-        }
-        //flop
-        oppoFlopBet=curSeat.flopBet;
-        if(minOppoFlopBet>oppoFlopBet){
-            minOppoFlopBet=oppoFlopBet;
-        }
-        if(oppoFlopBet>maxOppoFlopBet){
-            maxOppoFlopBet=oppoFlopBet;
-        }
-        if(minFlopLvl1Threshold>curSeat.flopLvl1Threshold){
-            minFlopLvl1Threshold=curSeat.flopLvl1Threshold;
-        }
-        if(maxFlopLvl1Threshold<curSeat.flopLvl1Threshold){
-            maxFlopLvl1Threshold=curSeat.flopLvl1Threshold;
-        }
-        if(minFlopLvl2Threshold>curSeat.flopLvl2Threshold){
-            minFlopLvl2Threshold=curSeat.flopLvl2Threshold;
-        }
-        if(maxFlopLvl2Threshold<curSeat.flopLvl2Threshold){
-            maxFlopLvl2Threshold=curSeat.flopLvl2Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minFlopRaiseLvl1Threshold>curSeat.flopRaiseLvl1Threshold){
-            minFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
-        }
-        if(maxFlopRaiseLvl1Threshold<curSeat.flopRaiseLvl1Threshold){
-            maxFlopRaiseLvl1Threshold=curSeat.flopRaiseLvl1Threshold;
-        }
-        if(minFlopRaiseLvl2Threshold>curSeat.flopRaiseLvl2Threshold){
-            minFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
-        }
-        if(maxFlopRaiseLvl2Threshold<curSeat.flopRaiseLvl2Threshold){
-            maxFlopRaiseLvl2Threshold=curSeat.flopRaiseLvl2Threshold;
-        }
-        //turn
-        oppoTurnBet=curSeat.turnBet;
-        if(minOppoTurnBet>oppoTurnBet){
-            minOppoTurnBet=oppoTurnBet;
-        }
-        if(oppoTurnBet>maxOppoTurnBet){
-            maxOppoTurnBet=oppoTurnBet;
-        }
-        if(minTurnLvl1Threshold>curSeat.turnLvl1Threshold){
-            minTurnLvl1Threshold=curSeat.turnLvl1Threshold;
-        }
-        if(maxTurnLvl1Threshold<curSeat.turnLvl1Threshold){
-            maxTurnLvl1Threshold=curSeat.turnLvl1Threshold;
-        }
-        if(minTurnLvl2Threshold>curSeat.turnLvl2Threshold){
-            minTurnLvl2Threshold=curSeat.turnLvl2Threshold;
-        }
-        if(maxTurnLvl2Threshold<curSeat.turnLvl2Threshold){
-            maxTurnLvl2Threshold=curSeat.turnLvl2Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minTurnRaiseLvl1Threshold>curSeat.turnRaiseLvl1Threshold){
-            minTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
-        }
-        if(maxTurnRaiseLvl1Threshold<curSeat.turnRaiseLvl1Threshold){
-            maxTurnRaiseLvl1Threshold=curSeat.turnRaiseLvl1Threshold;
-        }
-        if(minTurnRaiseLvl2Threshold>curSeat.turnRaiseLvl2Threshold){
-            minTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
-        }
-        if(maxTurnRaiseLvl2Threshold<curSeat.turnRaiseLvl2Threshold){
-            maxTurnRaiseLvl2Threshold=curSeat.turnRaiseLvl2Threshold;
-        }
-        //river
-        oppoRiverBet=curSeat.riverBet;
-        if(minOppoRiverBet>oppoRiverBet){
-            minOppoRiverBet=oppoRiverBet;
-        }
-        if(oppoRiverBet>maxOppoRiverBet){
-            maxOppoRiverBet=oppoRiverBet;
-        }
-        if(minRiverLvl1Threshold>curSeat.riverLvl1Threshold){
-            minRiverLvl1Threshold=curSeat.riverLvl1Threshold;
-        }
-        if(maxRiverLvl1Threshold<curSeat.riverLvl1Threshold){
-            maxRiverLvl1Threshold=curSeat.riverLvl1Threshold;
-        }
-        //所有对手中最大的加注量阈值
-        if(minRiverRaiseLvl1Threshold>curSeat.riverRaiseLvl1Threshold){
-            minRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
-        }
-        if(maxRiverRaiseLvl1Threshold<curSeat.riverRaiseLvl1Threshold){
-            maxRiverRaiseLvl1Threshold=curSeat.riverRaiseLvl1Threshold;
-        }
-        if(curSeat.preflopLvl1Threshold>5*betUnit){
-            crazyOpponentNum++;
-        }
-        if(myself.link.MySeat().positionIndex > curSeat.positionIndex){
-            frontNum++;
-        } else{
-            backNum++;
-            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold, myself.bigBlindBet)){
-                curSeat.hasGoodHand = true;
-                backGoodHandsNum++;
-            }
-        }
-        //位置统计
-        if(myself.link.MySeat().isBigBlind || (myself.link.MySeat().isSmallBlind && !myself.link.MySeat().isBigBlind) || (myself.link.MySeat().positionIndex>curSeat.positionIndex && !curSeat.isBigBlind && !curSeat.isSmallBlind)){
-            preflopFrontNum++;
-        } else{
-            preflopBackNum++;
-            if(curSeat.preflopLvl1Threshold>5*betUnit){
-                backCrazyOpponentNum++;
-            }
-        }
-        if(curSeat.preflopBet>precision){
-            if(oppoPreflopBet>=Math.max(curSeat.preflopLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodHand = true;
-                opponentGoodHandsNum++;
-            }
-            if(oppoFlopBet>=Math.max(curSeat.flopLvl1Threshold, myself.bigBlindBet)){
-                curSeat.hasGoodFlopLvl1 = true;
-                opponentGoodFlopLvl1Num++;
-            }
-            if(oppoTurnBet>=Math.max(curSeat.getTurnLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodTurnLvl1 = true;
-                opponentGoodTurnLvl1Num++;
-            }
-            if(oppoRiverBet>=Math.max(curSeat.getRiverLvl1Threshold(), myself.bigBlindBet)){
-                curSeat.hasGoodRiverLvl1 = true;
-                opponentGoodRiverLvl1Num++;
-            }
-        }
-        curSeat = myself.link.GetNextActive();
-        console.log('end curSeat', curSeat)
-    }
-}
-
 function updatePlayerStatisticTable(curSeat, state){
+    console.log('in updatePlayerStatisticTable preflopBet', myself.playerStatisticTable.get(curSeat.user).preflopBet)
+    console.log('in updatePlayerStatisticTable flopBet', myself.playerStatisticTable.get(curSeat.user).flopBet)
+    console.log('in updatePlayerStatisticTable turnBet', myself.playerStatisticTable.get(curSeat.user).turnBet)
+    console.log('in updatePlayerStatisticTable riverBet', myself.playerStatisticTable.get(curSeat.user).riverBet)
     if(state==2){
         //如果弃牌了，就保留-1，否则赋予preflopBet新的值
         if(curSeat.isFold==false){
@@ -2538,15 +2451,16 @@ function updatePlayerStatisticTable(curSeat, state){
             }
         }
         else if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 4){
+            console.log('myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop)', myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop))
             if(curSeat.bet > myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop)){
                 console.log('curSeat.bet > myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.PreFlop)')
                 myself.playerStatisticTable.get(curSeat.user).setFollowMax(constant.state.PreFlop, curSeat.bet);
             }
         }
     } else if(state == 4){
-        if(curSeat.isFold==false){
+        if(!curSeat.isFold){
+            curSeat.flopBet = curSeat.bet;
             console.log('in updatePlayerStatisticTable 翻牌', curSeat.flopBet)
-            curSeat.flopBet = curSeat.bet-curSeat.preflopBet;
             if(curSeat.flopRaiseBet==-1){
                 curSeat.flopRaiseBet = 0;
             }
@@ -2555,12 +2469,12 @@ function updatePlayerStatisticTable(curSeat, state){
 
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
-            curSeat.flopRaiseBet = curSeat.bet - curSeat.preflopBet;
+            curSeat.flopRaiseBet = curSeat.bet;
             console.log('翻牌 加注的量 curSeat.flopRaiseBet', curSeat.flopRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setFlopRaiseBet(myself.playNum, curSeat.flopRaiseBet);
 
-            if(myself.playerStatisticTable.get(curSeat.user).isFlopRaiseNumFlag()==false){
+            if(!myself.playerStatisticTable.get(curSeat.user).isFlopRaiseNumFlag()){
                 myself.playerStatisticTable.get(curSeat.user).addFlopRaiseNum();
             }
             if(curSeat.bet>myself.playerStatisticTable.get(curSeat.user).getRaiseMax(constant.state.Flop)){
@@ -2575,7 +2489,7 @@ function updatePlayerStatisticTable(curSeat, state){
     } else if(state==5){
         if(!curSeat.isFold){
             console.log('in updatePlayerStatisticTable 转牌', curSeat.turnBet)
-            curSeat.turnBet = curSeat.bet-curSeat.flopBet-curSeat.preflopBet;
+            curSeat.turnBet = curSeat.bet;
             if(curSeat.turnRaiseBet==-1){
                 curSeat.turnRaiseBet = 0;
             }
@@ -2584,12 +2498,12 @@ function updatePlayerStatisticTable(curSeat, state){
         myself.playerStatisticTable.get(curSeat.user).setTurnBet(myself.playNum, curSeat.turnBet);
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
-            curSeat.turnRaiseBet = curSeat.bet-  curSeat.flopBet-curSeat.preflopBet;
+            curSeat.turnRaiseBet = curSeat.bet;
             console.log('转牌 加注的量 curSeat.turnRaiseBet', curSeat.turnRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setTurnRaiseBet(myself.playNum, curSeat.turnRaiseBet);
 
-            if(myself.playerStatisticTable.get(curSeat.user).isTurnRaiseNumFlag()==false){
+            if(!myself.playerStatisticTable.get(curSeat.user).isTurnRaiseNumFlag()){
                 myself.playerStatisticTable.get(curSeat.user).addTurnRaiseNum();
             }
             if(curSeat.bet>myself.playerStatisticTable.get(curSeat.user).getRaiseMax(constant.state.Turn)){
@@ -2603,8 +2517,8 @@ function updatePlayerStatisticTable(curSeat, state){
         }
     }
     else if(state==6){
-        if(curSeat.isFold==false){
-            curSeat.riverBet = curSeat.bet - curSeat.turnBet - curSeat.glopBet - curSeat.preflopBet;
+        if(!curSeat.isFold){
+            curSeat.riverBet = curSeat.bet;
             if(curSeat.riverRaiseBet==-1){
                 curSeat.riverRaiseBet = 0;
             }
@@ -2612,12 +2526,12 @@ function updatePlayerStatisticTable(curSeat, state){
         myself.playerStatisticTable.get(curSeat.user).setRiverBet(myself.playNum, curSeat.riverBet);
         if(_.find(myself.allUserInfor, {'user': curSeat.user}).lastValidAction == 5){
             //加注的量
-            curSeat.riverRaiseBet = curSeat.bet-curSeat.turnBet-curSeat.flopBet-curSeat.preflopBet;
+            curSeat.riverRaiseBet = curSeat.bet;
             console.log('河牌加注的量 curSeat.riverRaiseBet', curSeat.riverRaiseBet)
             //统计表加入最新的数据
             myself.playerStatisticTable.get(curSeat.user).setRiverRaiseBet(myself.playNum, curSeat.riverRaiseBet);
 
-            if(myself.playerStatisticTable.get(curSeat.user).isRiverRaiseNumFlag()==false){
+            if(!myself.playerStatisticTable.get(curSeat.user).isRiverRaiseNumFlag()){
                 myself.playerStatisticTable.get(curSeat.user).addRiverRaiseNum();
             }
             if(curSeat.bet>myself.playerStatisticTable.get(curSeat.user).getRaiseMax(constant.state.River)){
@@ -2631,33 +2545,38 @@ function updatePlayerStatisticTable(curSeat, state){
         }
     }
 
-    if(myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(0)==false && curSeat.bet>0.9*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
+    if(!myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(0) && curSeat.bet>0.9*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
         myself.playerStatisticTable.get(curSeat.user).addWatchGoodNum(0);
         myself.playerStatisticTable.get(curSeat.user).setIsWatchedMap(0, true);
     }
-    else if(myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(1)==false && curSeat.bet>0.5*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
+    else if(!myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(1) && curSeat.bet>0.5*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
         myself.playerStatisticTable.get(curSeat.user).addWatchGoodNum(1);
         myself.playerStatisticTable.get(curSeat.user).setIsWatchedMap(1, true);
     }
-    else if(myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(2)==false && curSeat.bet>0.25*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
+    else if(!myself.playerStatisticTable.get(curSeat.user).GetIsWatchedMap(2) && curSeat.bet>0.25*myself.playerStatisticTable.get(curSeat.user).getFollowMax(constant.state.River)){
         myself.playerStatisticTable.get(curSeat.user).addWatchGoodNum(2);
         myself.playerStatisticTable.get(curSeat.user).setIsWatchedMap(2, true);
     }
 }
 
 function isJettonDominated(myJetton, totalJetton, playerNum, smallBlindBet, bigBlindBet, curPlayNum, maxPlayNum){
+    console.log('in isJettonDominated myJetton', myJetton)
+    console.log('in isJettonDominated totalJetton', totalJetton)
+    console.log('in isJettonDominated playerNum', playerNum)
+    console.log('in isJettonDominated smallBlindBet', smallBlindBet)
+    console.log('in isJettonDominated bigBlindBet', bigBlindBet)
+    console.log('in isJettonDominated curPlayNum', curPlayNum)
+    console.log('in isJettonDominated maxPlayNum', maxPlayNum)
     if(playerNum<2 || curPlayNum>maxPlayNum){
         return true;
-    }
-    else if(playerNum==2){
+    }else if(playerNum==2){
         let leftPlayNum=maxPlayNum-curPlayNum+1;
-        if(myJetton-smallBlindBet*((leftPlayNum/2)+1)>totalJetton/2){
+        if(myJetton-smallBlindBet*(leftPlayNum / 2+1)>(totalJetton/2)){
             return true;
         }
-    }
-    else{
-        let leftPlayNum=maxPlayNum-curPlayNum+1;
-        if(myJetton-(smallBlindBet+bigBlindBet)*((leftPlayNum/3)+1)>totalJetton/2){
+    }else{
+        let leftPlayNum = maxPlayNum-curPlayNum+1;
+        if(myJetton - (smallBlindBet+bigBlindBet) * (leftPlayNum / 3 + 1) > totalJetton/2){
             return true;
         }
     }
@@ -2683,7 +2602,7 @@ function isJettonEnough(myJetton, jetton_2nd, jetton_3rd, playerNum, smallBlindB
  */
 function GetRiverProba(){
     console.log('in GetRiverProba _.cloneDeep(myself.holdCards.concat(myself.commonCards))', _.cloneDeep(myself.holdCards.concat(myself.commonCards)))
-    let myHandType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards))),
+    let myHandType = util.getBiggest(_.cloneDeep(myself.holdCards.concat(myself.commonCards).sort(util.sortCardList))),
         cardUsedMap = [];
     for(let i=0;i<myself.holdCards.concat(myself.commonCards).length;i++){
         cardUsedMap[myself.holdCards.concat(myself.commonCards)[i].point-2]=true;

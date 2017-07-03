@@ -175,6 +175,15 @@ var playerLink = function(){
         return this.dataList.indexOf(this.dataList[p].previous);
     }
 
+    this.clear = () => {
+        if (this.dataList !== null)
+            this.dataList.splice(0, this.dataList.length);
+        this.head = null;
+        this.tail = null;
+        this.cur = null;
+        this.me = null;
+    }
+
     /**
      * 获取前一个座次
      *

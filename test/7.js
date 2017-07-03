@@ -1825,37 +1825,70 @@ var coll = [
     "g3@^(http|https):\\/\\/wwwww\\.qule\\.com.*?"
 ]
 
-fs.readFile('./tmp.txt','utf-8',function(err, data){
+// fs.readFile('./tmp.txt','utf-8',function(err, data){
+//     if(err){
+//         console.error(err);
+//     }
+//     else{
+//         fs.readFile('./collection.txt','utf-8',function(err, coll){
+//             var array = data.split('\r\n');
+//             let collection = coll.split('\r\n'),
+//             save = []
+//             array.forEach(function(arr){
+//                 for(let i = 0; i < collection.length; i++){
+//                     // console.log('arr', arr)
+//                     var tmp = arr.slice(0, arr.indexOf('.'))
+//                     // console.log('tmp', tmp)
+//                     // console.log('collection', collection[i])
+//                     // console.log(collection[i].indexOf(tmp))
+//                     if(-1 !== collection[i].indexOf(tmp)){
+//                         save.push(arr)
+//                         // console.log(arr);
+//                         break;
+//                     }
+//                 }
+//                 // console.log(arr.slice(0, arr.indexOf('.')))
+//             })
+//             // console.log(array)
+//             // console.log(save)
+//             console.log(_.difference(array, save))
+//             fs.writeFile('out.txt', _.difference(array, save).join('\r\n'), function (err) {
+//                 if (err) throw err;
+//                 console.log('It\'s saved!');
+//             });
+//         })
+//     }
+// });
+
+fs.readFile('./out.txt','utf-8',function(err, data){
     if(err){
         console.error(err);
     }
     else{
-        fs.readFile('./collection.txt','utf-8',function(err, coll){
-            var array = data.split('\r\n');
-            let collection = coll.split('\r\n'),
+        // fs.readFile('./output.txt','utf-8',function(err, output){
+            let outputData = data.split('\r\n'),
             save = []
-            array.forEach(function(arr){
-                for(let i = 0; i < collection.length; i++){
-                    // console.log('arr', arr)
-                    var tmp = arr.slice(0, arr.indexOf('.'))
-                    // console.log('tmp', tmp)
-                    // console.log('collection', collection[i])
-                    // console.log(collection[i].indexOf(tmp))
-                    if(-1 !== collection[i].indexOf(tmp)){
-                        save.push(arr)
-                        // console.log(arr);
-                        break;
-                    }
-                }
-                // console.log(arr.slice(0, arr.indexOf('.')))
+            outputData.forEach(function(od){
+                let tmp = od.split('.'), str='';
+
+                tmp.forEach(function(t, index){
+                    if(index===tmp.length-1){
+                        str += t + '.*?",'
+                    }else
+                        str += t + '\\\.'
+                })
+                str = '"g1@^(http|https):\\/\\/.*\\.' + str
+                save.push(str)
             })
-            // console.log(array)
-            // console.log(save)
-            console.log(_.difference(array, save))
-            fs.writeFile('out.txt', _.difference(array, save).join('\r\n'), function (err) {
+        // console.log(save)
+        //
+        //     console.log(array)
+        //     console.log(save)
+        //     console.log(_.difference(array, save))
+            fs.writeFile('output.txt',save.join('\r\n'), function (err) {
                 if (err) throw err;
                 console.log('It\'s saved!');
             });
-        })
+        // })
     }
 });

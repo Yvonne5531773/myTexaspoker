@@ -1817,7 +1817,6 @@
     "g1@^(http|https):\\/\\/web\\.52pk\\.com.*?",
     "g2@^(http|https):\\/\\/wwwww\\.baidu\\.com.*?",
     "g3@^(http|https):\\/\\/wwwww\\.qule\\.com.*?",
-
     "g1@^(http|https):\/\/.*\.005\.tv.*?",
     "g1@^(http|https):\/\/.*\.007yx\.com.*?",
     "g1@^(http|https):\/\/.*\.01234\.com\.cn.*?",

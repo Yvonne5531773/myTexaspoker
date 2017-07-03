@@ -24,7 +24,7 @@ module.exports = {
         }
     },
     player: {
-        deskid: 100014,
+        deskid: 100030,
         user: 'TGroup',
         pass: 'wvagab',
         // user: 'TGroup1',

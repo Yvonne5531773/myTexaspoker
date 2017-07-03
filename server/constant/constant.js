@@ -7,7 +7,7 @@
 module.exports = {
 
     //游戏最大局数
-    MAX_PLAYNUM : 600,
+    MAX_PLAYNUM : 1000,
 
     //小盲注
     SMALL_BLIND_BET : 100,
@@ -20,10 +20,10 @@ module.exports = {
 
 
     //计算各个threshold的时候用到多少条历史记录
-    PREFLOP_THRESHOLD_CALC_NUM : 600,
-    FLOP_THRESHOLD_CALC_NUM : 600,
-    TURN_THRESHOLD_CALC_NUM : 600,
-    RIVER_THRESHOLD_CALC_NUM : 600,
+    PREFLOP_THRESHOLD_CALC_NUM : 1000,
+    FLOP_THRESHOLD_CALC_NUM : 1000,
+    TURN_THRESHOLD_CALC_NUM : 1000,
+    RIVER_THRESHOLD_CALC_NUM : 1000,
 
     state : {
         PreFlop: 'PreFlop', //先下大小盲注，然后给每个玩家发2张底牌
