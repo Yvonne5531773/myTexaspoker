@@ -138,7 +138,7 @@ function requstMessage(token, msgid) {
                     switch (result.msgs[0].msg_type){
                         case 1:
                             console.log('---------------用户状态--------------------- msg', msg)
-                            if(msg.users_info[0].user_status===5) myself.oneHasAllIn = true;
+                            // if(msg.users_info[0].user_status===5) myself.oneHasAllIn = true;
                             myself.imSmallBlind = _.filter(myself.seatinfos, {'isSmallBlind':true}).user === msg.users_info[0].user;
                             myself.imBigBlind = _.filter(myself.seatinfos, {'isBigBlind':true}).user === msg.users_info[0].user;
                             if(msg.users_info[0].user === config.player.user){
@@ -173,6 +173,7 @@ function requstMessage(token, msgid) {
                                             if (myself.link.CurrentSeat().bet !== 0) {  //每一阶段的开始，翻拍 转牌..
                                                 myself.betStageNotEmpty = true;
                                             }
+                                            if(myself.link.isAllin) myself.oneHasAllIn = true
                                         }
                                         console.log('计算出本次行动要跟进的话要下注还是跟注 myself.betStageNotEmpty', myself.betStageNotEmpty)
                                         console.log('计算出本次行动要跟进的话至少要跟注的数额', myself.detaCallBet)
@@ -219,10 +220,17 @@ function requstMessage(token, msgid) {
                                             console.log('牌局状态 第一次 myself.flopRaiseCnt', myself.flopRaiseCnt)
                                             console.log('牌局状态 第一次 myself.maxRaiseNum', myself.maxRaiseNum)
                                             //如果阈值允许，则加注相应的数量
-                                            if (preflopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.preflopRaiseCnt < myself.maxRaiseNum) {
+                                            if(myself.oneHasAllIn){
+                                                if(preflopThreshold.raiseThreshold > 3 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.preflopRaiseCnt < myself.maxRaiseNum){
+                                                    type = 6;
+                                                }else{
+                                                    type = 8;
+                                                }
+                                                myself.oneHasAllIn = false;
+                                            }else if (preflopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.preflopRaiseCnt < myself.maxRaiseNum) {
                                                 myself.preflopRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = Math.floor((preflopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet
+                                                money = 2*Math.floor((preflopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet
                                                 console.log('加注---------- type', type)
                                             }
                                             //否则，能让则让
@@ -232,7 +240,7 @@ function requstMessage(token, msgid) {
                                                 myself.prefoldCheckCount++;
                                             }
                                             //否则，如果阈值允许，则跟
-                                            else if (preflopThreshold.followThreshold > myself.detaCallBet || preflopThreshold.followThreshold >= myself.link.MySeat().jetton) {
+                                            else if (preflopThreshold.followThreshold > 2*myself.detaCallBet || preflopThreshold.followThreshold >= myself.link.MySeat().jetton) {
                                                 type = 4;
                                                 money = myself.detaCallBet;
                                                 console.log('跟注----------')
@@ -252,10 +260,17 @@ function requstMessage(token, msgid) {
                                             console.log('牌局状态 翻牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
                                             console.log('牌局状态 翻牌 myself.maxRaiseNum', myself.maxRaiseNum)
                                             //如果阈值允许，则加注相应的数量
-                                            if (flopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && flopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
+                                            if(myself.oneHasAllIn){
+                                                if(preflopThreshold.raiseThreshold > 3 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum){
+                                                    type = 6;
+                                                }else{
+                                                    type = 8;
+                                                }
+                                                myself.oneHasAllIn = false;
+                                            }else if (flopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && flopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
                                                 myself.flopRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = Math.floor((flopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 3*Math.floor((flopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('翻牌加注---------- money', money)
                                             }
                                             //否则，能让则让
@@ -282,13 +297,20 @@ function requstMessage(token, msgid) {
                                             console.log('牌局状态 转牌 turnThreshold', turnThreshold)
                                             console.log('牌局状态 转牌 myself.detaCallBet', myself.detaCallBet)
                                             console.log('牌局状态 转牌 myself.leastRaiseBet', myself.leastRaiseBet)
-                                            console.log('牌局状态 转牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 转牌 myself.turnRaiseCnt', myself.turnRaiseCnt)
                                             console.log('牌局状态 转牌 myself.maxRaiseNum', myself.maxRaiseNum)
                                             //如果阈值允许，则加注相应的数量
-                                            if (turnThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && turnThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
+                                            if(myself.oneHasAllIn){
+                                                if(preflopThreshold.raiseThreshold > 3 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.turnRaiseCnt < myself.maxRaiseNum){
+                                                    type = 6;
+                                                }else{
+                                                    type = 8;
+                                                }
+                                                myself.oneHasAllIn = false;
+                                            }else if (turnThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && turnThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.turnRaiseCnt < myself.maxRaiseNum) {
                                                 myself.turnRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = Math.floor((turnThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 3*Math.floor((turnThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('转牌加注----------')
                                             }
                                             //否则，能让则让
@@ -315,13 +337,20 @@ function requstMessage(token, msgid) {
                                             console.log('牌局状态 河牌 riverThreshold', riverThreshold)
                                             console.log('牌局状态 河牌 myself.detaCallBet', myself.detaCallBet)
                                             console.log('牌局状态 河牌 myself.leastRaiseBet', myself.leastRaiseBet)
-                                            console.log('牌局状态 河牌 myself.flopRaiseCnt', myself.flopRaiseCnt)
+                                            console.log('牌局状态 河牌 myself.riverRaiseCnt', myself.riverRaiseCnt)
                                             console.log('牌局状态 河牌 myself.maxRaiseNum', myself.maxRaiseNum)
                                             //如果阈值允许，则加注相应的数量
-                                            if (riverThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && riverThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum) {
+                                            if(myself.oneHasAllIn){
+                                                if(preflopThreshold.raiseThreshold > 3 * myself.detaCallBet - precision && preflopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum){
+                                                    type = 6;
+                                                }else{
+                                                    type = 8;
+                                                }
+                                                myself.oneHasAllIn = false;
+                                            }else if (riverThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && riverThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum) {
                                                 myself.riverRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = Math.floor((riverThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 4*Math.floor((riverThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('河牌加注----------')
                                             }
                                             //否则，能让则让
@@ -1040,7 +1069,7 @@ function GetPreFlopThreshold_loose(){
                 followThreshold= myself.link.MySeat().jetton+precision;
             }
             else{
-                raiseThreshold=detaCallBet*2;
+                raiseThreshold = myself.detaCallBet*2;
                 followThreshold=myself.link.MySeat().jetton+precision;
             }
         }
