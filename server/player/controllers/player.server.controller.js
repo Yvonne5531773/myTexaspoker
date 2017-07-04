@@ -267,10 +267,10 @@ function requstMessage(token, msgid) {
                                                     type = 8;
                                                 }
                                                 myself.oneHasAllIn = false;
-                                            }else if (flopThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && flopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
+                                            }else if (flopThreshold.raiseThreshold >  myself.detaCallBet - precision && flopThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.flopRaiseCnt < myself.maxRaiseNum) {
                                                 myself.flopRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = 3*Math.floor((flopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 2*Math.floor((flopThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('翻牌加注---------- money', money)
                                             }
                                             //否则，能让则让
@@ -307,10 +307,10 @@ function requstMessage(token, msgid) {
                                                     type = 8;
                                                 }
                                                 myself.oneHasAllIn = false;
-                                            }else if (turnThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && turnThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.turnRaiseCnt < myself.maxRaiseNum) {
+                                            }else if (turnThreshold.raiseThreshold >  myself.detaCallBet - precision && turnThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.turnRaiseCnt < myself.maxRaiseNum) {
                                                 myself.turnRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = 3*Math.floor((turnThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 2*Math.floor((turnThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('转牌加注----------')
                                             }
                                             //否则，能让则让
@@ -347,10 +347,10 @@ function requstMessage(token, msgid) {
                                                     type = 8;
                                                 }
                                                 myself.oneHasAllIn = false;
-                                            }else if (riverThreshold.raiseThreshold > 2 * myself.detaCallBet - precision && riverThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum) {
+                                            }else if (riverThreshold.raiseThreshold > myself.detaCallBet - precision && riverThreshold.raiseThreshold - myself.detaCallBet > myself.leastRaiseBet && myself.riverRaiseCnt < myself.maxRaiseNum) {
                                                 myself.riverRaiseCnt++;
                                                 type = myself.betStageNotEmpty ? 5 : 3 //非空证明这一阶段有玩家下注，所以要加注
-                                                money = 4*Math.floor((riverThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
+                                                money = 3*Math.floor((riverThreshold.raiseThreshold - myself.detaCallBet) / myself.leastRaiseBet) * myself.leastRaiseBet;
                                                 console.log('河牌加注----------')
                                             }
                                             //否则，能让则让
